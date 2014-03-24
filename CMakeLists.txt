@@ -35,7 +35,6 @@ FIND_PACKAGE(OpenCV REQUIRED)
 
 #Include directories
 include_directories( ${CMAKE_SOURCE_DIR}/include/ )
-include_directories( ${CMAKE_SOURCE_DIR}/external/libblob )
 
 #Configure
 SET(${PROJECT_NAME}_CXXFLAGS "")
