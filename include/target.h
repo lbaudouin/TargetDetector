@@ -38,7 +38,7 @@ public:
   /** Only position target objet (don't read code)
    * @arg target_type is the target @ref Type
    */
-  Target(Type target_type) : m_type(target_type), m_readCode(false)
+  Target(Type target_type) : m_type(target_type), m_readCode(false), m_orientation(-1)
   {
     initType();
     m_headerValue = -1;
@@ -50,7 +50,7 @@ public:
    */
   Target(Type target_type, int header_bits, int message_bits, bool use_parity_bit, int header_value, bool use_gray_code = false) : 
 	m_type(target_type), m_headerBits(header_bits), m_messageBits(message_bits), m_useParityBit(use_parity_bit), m_headerValue(header_value),
-	m_useGrayCode(use_gray_code), m_nbPointPerBit(8), m_readCode(true), m_firstHeaderIndex(0), m_inverseParityBit(false)
+	m_useGrayCode(use_gray_code), m_nbPointPerBit(8), m_readCode(true), m_firstHeaderIndex(0), m_inverseParityBit(false), m_orientation(-1)
   {
     m_nbBits = m_headerBits + m_messageBits + (use_parity_bit?1:0);
         
@@ -156,19 +156,25 @@ public:
   /** Return the center of target **/
   cv::Point2f center() const { return m_center; }
   
+  /** Return the orientation of target
+   * angle is in [0:2/pi]
+   * Return -1 if invalid
+   **/
+  double orientation() const { return m_orientation; }
+  
   /** Set ellipse parameters
    * @param a is major axis
    * @param b is minor axis
    * @param orientation is ellipse orientation
    **/
-  void setEllipseParameters(double a, double b, double orientation) { m_a = a; m_b = b; m_orientation = orientation; }
+  void setEllipseParameters(double a, double b, double orientation) { m_ellipseMajorAxis = a; m_ellipseMinorAxis = b; m_ellipseOrientation = orientation; }
   
   /** Get ellipse parameters
    * @param a is major axis
    * @param b is minor axis
    * @param orientation is ellipse orientation
    **/
-  void ellipseParameters(double &a, double &b, double &orientation) const { a = m_a; b = m_b; orientation = m_orientation; }
+  void ellipseParameters(double &a, double &b, double &orientation) const { a = m_ellipseMajorAxis; b = m_ellipseMinorAxis; orientation = m_ellipseOrientation; }
   
   /** Return first radius factor to read the header/message **/
   double radiusFactor() const { return m_radiusFactor; }
@@ -203,7 +209,12 @@ public:
   /** Set index of the first header points
    * @param index is the index of the first header point
    **/
-  int setFirstHeaderIndex(int index) { m_firstHeaderIndex = index; }
+  int setFirstHeaderIndex(int index) {
+    assert(index<m_points.size());
+    m_firstHeaderIndex = index;
+    cv::Point2f delta = m_points[index] - m_center;
+    m_orientation = std::atan2( delta.y, delta.x );
+  }
   
   /** Get the index of the first header point **/
   int firstHearderIndex() const { return m_firstHeaderIndex; }
@@ -251,10 +262,11 @@ private:
   
   int m_firstHeaderIndex; /*!< First header index */
   
-  cv::Point2f m_center; /*!< Center of target */
-  double m_a; /*!< Long ellipse axis */
-  double m_b; /*!< Small ellipse axis */
-  double m_orientation; /*!< Ellipse orientation */
+  cv::Point2f m_center; /*!< Center of the target */
+  double m_orientation; /*!< Orientation of the target */
+  double m_ellipseMajorAxis; /*!< Major ellipse axis */
+  double m_ellipseMinorAxis; /*!< Minor ellipse axis */
+  double m_ellipseOrientation; /*!< Ellipse orientation */
   double m_radiusFactor; /*!< Factor to apply on the ellipse to be on the code ellipse */
   double m_radiusFactor2; /*!< Second factor to apply on the ellipse to be on the code ellipse */
   
