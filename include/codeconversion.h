@@ -46,7 +46,7 @@ namespace {
       return "";
     std::stringstream ss;
     while(val > 0) {
-      ss << val % 2 == 0 ? '0' : '1';
+      ss << (val % 2 == 0 ? '0' : '1');
       val /= 2;
     }
     std::string str = ss.str();
@@ -61,7 +61,7 @@ namespace {
   {
     if(bin.empty())
       return "0";
-    int cnt = 0;
+    unsigned int cnt = 0;
     std::stringstream gray;
     gray << bin[0];
     while(cnt<bin.length()-1){
@@ -78,7 +78,7 @@ namespace {
   {
     if(gray.empty())
       return "0";
-    int cnt = 0;
+    unsigned int cnt = 0;
     std::stringstream bin;
     bin << gray[0];
     while(cnt<gray.length()-1){
@@ -112,7 +112,7 @@ namespace {
   inline int parity(std::string bin)
   {
     int nbOnes = 0;
-    for(int i=0;i<bin.size();i++)
+    for(unsigned int i=0;i<bin.size();i++)
       if(bin[i]=='1')
 	nbOnes++;
       return nbOnes%2;

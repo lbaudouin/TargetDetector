@@ -80,8 +80,7 @@ bool TargetDetector::autoThreshold(const cv::Mat &image, Target search, int step
 bool TargetDetector::autoThreshold(cv::VideoCapture &capture, Target search, int step, int nbIterationMax)
 {  
   for(int i=0;i<nbIterationMax;i++){
-    int min,max;
-    
+   
     //Grab the image
     cv::Mat image;
     capture >> image;
@@ -154,7 +153,7 @@ std::vector<Target> TargetDetector::track(const cv::Mat &image, std::vector<Targ
 
   //Call different method according to the type
   std::vector<Target> targets;
-  for(int i=0;i<searches.size();i++){
+  for(unsigned int i=0;i<searches.size();i++){
     std::vector<Target> targetsTemp = checkBlobs(blobs,imageGray,searches[i]);
     if(targetsTemp.size()>0)
       targets.insert(targets.end(), targetsTemp.begin(), targetsTemp.end());
@@ -237,7 +236,7 @@ Blob TargetDetector::createBlob(int index, const std::vector<std::vector<cv::Poi
   
   //Compute area with hole
   blob.realArea = blob.area;
-  for(int i=0;i<blob.children.size();i++)
+  for(unsigned int i=0;i<blob.children.size();i++)
     blob.realArea -= blob.children[i].area;
 
   blob.index = index;
@@ -332,7 +331,7 @@ std::vector<Target> TargetDetector::checkBlobs(const std::vector<Blob> &blobs, c
   
   switch(search.type()){
     case Target::OneBlob:
-      for(int i=0;i<blobs.size();i++){
+      for(unsigned int i=0;i<blobs.size();i++){
 	std::vector<Target> tmp = checkOneBlob(blobs[i],frameGray,search); 
 	if(tmp.size()>0){
 	  targets.insert(targets.end(),tmp.begin(),tmp.end());
@@ -340,7 +339,7 @@ std::vector<Target> TargetDetector::checkBlobs(const std::vector<Blob> &blobs, c
       }
       break;
     case Target::ThreeBlobs:
-      for(int i=0;i<blobs.size();i++){
+      for(unsigned int i=0;i<blobs.size();i++){
 	std::vector<Target> tmp = checkThreeBlobs(blobs[i],frameGray,search); 
 	if(tmp.size()>0){
 	  targets.insert(targets.end(),tmp.begin(),tmp.end());
@@ -348,7 +347,7 @@ std::vector<Target> TargetDetector::checkBlobs(const std::vector<Blob> &blobs, c
       }
       break;
     case Target::TwoRings:
-      for(int i=0;i<blobs.size();i++){
+      for(unsigned int i=0;i<blobs.size();i++){
 	std::vector<Target> tmp = checkTwoRings(blobs[i],frameGray,search); 
 	if(tmp.size()>0){
 	  targets.insert(targets.end(),tmp.begin(),tmp.end());
@@ -388,7 +387,7 @@ std::vector<Target> TargetDetector::checkOneBlob(const Blob &blob, const cv::Mat
   }
   
   if(blob.children.size()>0){
-    for(int i=0;i<blob.children.size();i++){
+    for(unsigned int i=0;i<blob.children.size();i++){
       std::vector<Target> tmp = checkOneBlob(blob.children[i],frameGray,search);
       if(tmp.size()>0){
 	targets.insert(targets.end(),tmp.begin(),tmp.end());
@@ -410,12 +409,12 @@ std::vector<Target> TargetDetector::checkThreeBlobs(const Blob &blob, const cv::
   if(blob.isValid){
     if(isEllipse(blob,0.95)){  
       //Find internal circle
-      for(int i=0;i<blob.children.size();i++){
+      for(unsigned int i=0;i<blob.children.size();i++){
 	if(blob.children[i].index==blob.index || !blob.children[i].isValid)
 	  continue;
 	if(isConcentricEllispe(blob, blob.children[i], blob.minorAxis/10.0, 1.5/3.0, 2.5/3.0)){
 	  //Find central blob
-	  for(int j=0;j<blob.children[i].children.size();j++){
+	  for(unsigned int j=0;j<blob.children[i].children.size();j++){
 	    if(blob.children[i].children[j].index==blob.children[i].index || blob.children[i].children[j].index==blob.index || !blob.children[i].children[j].isValid)
 	      continue;
 	    
@@ -445,7 +444,7 @@ std::vector<Target> TargetDetector::checkThreeBlobs(const Blob &blob, const cv::
   }
   
   if(blob.children.size()>0){
-    for(int i=0;i<blob.children.size();i++){
+    for(unsigned int i=0;i<blob.children.size();i++){
       std::vector<Target> tmp = checkThreeBlobs(blob.children[i],frameGray,search);
       if(tmp.size()>0){
 	targets.insert(targets.end(),tmp.begin(),tmp.end());
@@ -467,12 +466,12 @@ std::vector<Target> TargetDetector::checkTwoRings(const Blob &blob, const cv::Ma
   if(blob.isValid){
     if(isEllipse(blob)){
       //Find internal circle
-      for(int i=0;i<blob.children.size();i++){
+      for(unsigned int i=0;i<blob.children.size();i++){
 	if(blob.children[i].index==blob.index || !blob.children[i].isValid)
 	  continue;
 	if(isConcentricEllispe(blob, blob.children[i], blob.minorAxis/10.0, 4.5/6.0, 5.5/6.0)){
 	  //Find central blob
-	  for(int j=0;j<blob.children[i].children.size();j++){
+	  for(unsigned int j=0;j<blob.children[i].children.size();j++){
 	    if(blob.children[i].children[j].index==blob.children[i].index || blob.children[i].children[j].index==blob.index || !blob.children[i].children[j].isValid)
 	      continue;
 	    if(isEllipseWithoutHole(blob.children[i].children[j]) && isConcentricEllispe(blob, blob.children[i].children[j], blob.minorAxis/10.0, 0.5/6.0, 1.5/6.0)){
@@ -497,7 +496,7 @@ std::vector<Target> TargetDetector::checkTwoRings(const Blob &blob, const cv::Ma
   }
   
   if(blob.children.size()>0){
-    for(int i=0;i<blob.children.size();i++){
+    for(unsigned int i=0;i<blob.children.size();i++){
       std::vector<Target> tmp = checkTwoRings(blob.children[i],frameGray,search);
       if(tmp.size()>0){
 	targets.insert(targets.end(),tmp.begin(),tmp.end());
@@ -567,7 +566,7 @@ bool TargetDetector::extractCodeFromImage(const cv::Mat &frameGray, cv::Point2d 
   
   //Normalize values
   double threshold = 0.5;  
-  for (int i=0;i<codeDouble.size();i++){
+  for(unsigned int i=0;i<codeDouble.size();i++){
     double val = ((codeDouble[i] - min)/(max - min));
     codeValues[i] = (val<threshold?1:0);
   }
@@ -621,7 +620,7 @@ bool TargetDetector::extractCode(const Blob &blob, const cv::Mat &frameGray, Tar
       
     //Save points value
     std::vector<int> pointsValue;
-    for(int i=0;i<points.size();i++){
+    for(unsigned int i=0;i<points.size();i++){
       if( codeString[ (i/target.numberPointPerBit())%codeString.length() ]=='0' )
 	pointsValue.push_back(0);
       else
@@ -656,7 +655,7 @@ bool TargetDetector::extractCode(const Blob &blob, const cv::Mat &frameGray, Tar
     
     std::vector<int> codeHeaderTemp;
     std::vector<cv::Point2f> pointsHeaderTemp;
-    for(int i=headerPos*nbPointPerBit;i<codeHeader.size();i++){
+    for(unsigned int i=headerPos*nbPointPerBit;i<codeHeader.size();i++){
       codeHeaderTemp.push_back(codeHeader[i]);
       pointsHeaderTemp.push_back(pointsHeader[i]);
     }
@@ -668,7 +667,7 @@ bool TargetDetector::extractCode(const Blob &blob, const cv::Mat &frameGray, Tar
     pointsHeader = pointsHeaderTemp;
     
     std::string str;
-    for(int i=0;i<headerString.size();i++){
+    for(unsigned int i=0;i<headerString.size();i++){
       int index = (i+headerPos+headerString.size())%headerString.size();
       str.push_back( headerString[index] );
     }
@@ -686,7 +685,7 @@ bool TargetDetector::extractCode(const Blob &blob, const cv::Mat &frameGray, Tar
     std::string messageString = code2string(codeMessage,nbPointPerBit);
             
     std::vector<int> pointsMessageValue;
-    for(int i=0;i<pointsMessage.size();i++){
+    for(unsigned int i=0;i<pointsMessage.size();i++){
       if( messageString[ (i/target.numberPointPerBit())%messageString.length() ]=='0' )
 	pointsMessageValue.push_back(0);
       else
@@ -694,7 +693,7 @@ bool TargetDetector::extractCode(const Blob &blob, const cv::Mat &frameGray, Tar
     }    
         
     std::vector<int> pointsHeaderValue;
-    for(int i=0;i<pointsHeader.size();i++){
+    for(unsigned int i=0;i<pointsHeader.size();i++){
       if( headerString[ (i/target.numberPointPerBit())%headerString.length() ]=='0' )
 	pointsHeaderValue.push_back(0);
       else
@@ -723,7 +722,7 @@ std::string TargetDetector::code2string(std::vector<int> &code, int nbPointPerBi
 {
   std::string codeString;
   double val = 0;
-  for (int i=0;i<code.size();i++){
+  for(unsigned int i=0;i<code.size();i++){
     val += code[i];
     if(i!=0 && (i%nbPointPerBit==0 || i==code.size()-1)){
       codeString.push_back( (val/nbPointPerBit>0.5?'1':'0') );
@@ -741,13 +740,13 @@ void TargetDetector::filterCode(std::vector<int> &code)
   int firstVal = code[0];
 
   //First filter, use (p)revious, (c)urrent and (n)ext value
-  for(int c=0;c<code.size();c++){
+  for(unsigned int c=0;c<code.size();c++){
     int p = (c-1+code.size())%code.size();
     int n = (c+1+code.size())%code.size();
     if(code[p]==firstVal && code[c]!=firstVal && code[n]==firstVal)
       code[c] = firstVal;
   }
-  for(int c=0;c<code.size();c++){
+  for(unsigned int c=0;c<code.size();c++){
     int p = (c-1+code.size())%code.size();
     int n = (c+1+code.size())%code.size();
     if(code[p]!=firstVal && code[c]==firstVal && code[n]!=firstVal)
@@ -755,7 +754,7 @@ void TargetDetector::filterCode(std::vector<int> &code)
   }
   
   //Second filter, use (p)revious, (c)urrent, (n)ext  and (s)secondNext value
-    for(int c=0;c<code.size();c++){
+  for(unsigned int c=0;c<code.size();c++){
     int p = (c-1+code.size())%code.size();
     int n = (c+1+code.size())%code.size();
     int s = (c+2+code.size())%code.size();
@@ -764,7 +763,7 @@ void TargetDetector::filterCode(std::vector<int> &code)
       code[n] = firstVal;
     }
   }
-  for(int c=0;c<code.size();c++){
+  for(unsigned int c=0;c<code.size();c++){
     int p = (c-1+code.size())%code.size();
     int n = (c+1+code.size())%code.size();
     int s = (c+2+code.size())%code.size();
@@ -791,7 +790,7 @@ int TargetDetector::alignPointsOnBit(std::vector<int> &code, std::vector<cv::Poi
   
   //Shift the code
   std::vector<int> codeCopy(code.size());
-  for(int i=0;i<codeCopy.size();i++){
+  for(unsigned int i=0;i<codeCopy.size();i++){
     int index = (i-shift+code.size())%code.size();
     codeCopy[index] = code[i];
   }
@@ -799,7 +798,7 @@ int TargetDetector::alignPointsOnBit(std::vector<int> &code, std::vector<cv::Poi
     
   //Shift points
   std::vector<cv::Point2f> pointsCopy;
-  for(int i=shift;i<points.size();i++)
+  for(unsigned int i=shift;i<points.size();i++)
     pointsCopy.push_back(points[i]);
   for(int i=0;i<shift;i++)
     pointsCopy.push_back(points[i]);
@@ -849,7 +848,6 @@ bool TargetDetector::readCode(Target &target, std::string codeString)
   std::string str = codeString + codeString;
   
   std::string message;
-  int message_value;
         
   if(found>=0){  
     message = str.substr(found+header.size(),target.nbBits()-header.size());
@@ -860,7 +858,7 @@ bool TargetDetector::readCode(Target &target, std::string codeString)
       message = message.substr(0,message.length()-1);
       
       if(target.inverseParityBit())
-	parityBit != parityBit;
+	parityBit = !parityBit;
       
       std::stringstream ss;
       ss << header << message;
@@ -904,7 +902,7 @@ void TargetDetector::drawTarget(cv::Mat &image, const Target &target)
  **/
 void TargetDetector::drawTargets(cv::Mat &image, const std::vector<Target> &targets)
 {
-  for(int i=0;i<targets.size();i++){
+  for(unsigned int i=0;i<targets.size();i++){
     //Ellipse center
     cv::circle(image,targets[i].center(),2,CV_RGB(255,0,0),-1);
     

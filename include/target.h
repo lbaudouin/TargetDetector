@@ -38,7 +38,7 @@ public:
   /** Only position target objet (don't read code)
    * @arg target_type is the target @ref Type
    */
-  Target(Type target_type) : m_type(target_type), m_readCode(false), m_orientation(-1)
+  Target(Type target_type) : m_type(target_type), m_orientation(-1), m_readCode(false)
   {
     initType();
     m_headerValue = -1;
@@ -49,8 +49,8 @@ public:
    * @arg target_type is the target @ref Type
    */
   Target(Type target_type, int header_bits, int message_bits, bool use_parity_bit, int header_value, bool use_gray_code = false) : 
-	m_type(target_type), m_headerBits(header_bits), m_messageBits(message_bits), m_useParityBit(use_parity_bit), m_headerValue(header_value),
-	m_useGrayCode(use_gray_code), m_nbPointPerBit(8), m_readCode(true), m_firstHeaderIndex(0), m_inverseParityBit(false), m_orientation(-1)
+	m_type(target_type), m_nbPointPerBit(8), m_useGrayCode(use_gray_code), m_useParityBit(use_parity_bit), m_inverseParityBit(false),
+	m_headerValue(header_value), m_headerBits(header_bits), m_messageBits(message_bits), m_firstHeaderIndex(0), m_orientation(-1), m_readCode(true)
   {
     m_nbBits = m_headerBits + m_messageBits + (use_parity_bit?1:0);
         
@@ -212,7 +212,7 @@ public:
   /** Set index of the first header points
    * @param index is the index of the first header point
    **/
-  int setFirstHeaderIndex(int index) {
+  void setFirstHeaderIndex(int index) {
     assert(index<m_points.size());
     m_firstHeaderIndex = index;
     cv::Point2f delta = m_points[index] - m_center;
