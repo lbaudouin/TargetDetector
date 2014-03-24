@@ -37,48 +37,54 @@ public:
   TargetDetector(int threshold = 125);
   ~TargetDetector();
   
-  std::vector<Target> track(const cv::Mat &image, std::vector<Target> searches);
-  std::vector<Target> track(const cv::Mat &image, Target search);
+  bool findTargetsGrid(const cv::Mat &image, cv::Size size, std::vector<cv::Point2f> &centers, Target search, std::vector<int> values = std::vector<int>()) const;
   
-  void drawTarget(cv::Mat &image, const Target &target);
-  void drawTargets(cv::Mat &image, const std::vector<Target> &targets);
+  std::vector<Target> track(const cv::Mat &image, std::vector<Target> searches) const;
+  std::vector<Target> track(const cv::Mat &image, Target search) const;
+  
+  void drawTarget(cv::Mat &image, const Target &target) const;
+  void drawTargets(cv::Mat &image, const std::vector<Target> &targets) const;
   
   void setThreshold(int threshold);
+  int threshold() const;
+  
   bool autoThreshold(const cv::Mat &image, Target search, int step = 10);
   bool autoThreshold(cv::VideoCapture &capture, Target search, int step = 10, int nbIterationMax = 100);
+  bool autoThreshold(const cv::Mat &image, const std::vector<Target> &search, int step = 10);
+  bool autoThreshold(cv::VideoCapture &capture, const std::vector<Target> &search, int step = 10, int nbIterationMax = 100);
     
 protected:
   //Find blobs
-  std::vector<Blob> findBlobs(const cv::Mat &frameGray, int thresholdType = CV_THRESH_BINARY);
-  Blob createBlob(int index, const std::vector<std::vector<cv::Point> > &contours, const std::vector<cv::Vec4i> &hierarchy, bool &ok);
-  Blob createBlob(std::vector<cv::Point> external, bool &ok);
+  std::vector<Blob> findBlobs(const cv::Mat &frameGray, int thresholdType = CV_THRESH_BINARY) const;
+  Blob createBlob(int index, const std::vector<std::vector<cv::Point> > &contours, const std::vector<cv::Vec4i> &hierarchy, bool &ok) const;
+  Blob createBlob(std::vector<cv::Point> external, bool &ok) const;
   
   //Check if blob is target
-  std::vector<Target> checkBlobs(const std::vector<Blob> &blobs, const cv::Mat &frameGray, Target search);
-  std::vector<Target> checkOneBlob(const Blob &blob, const cv::Mat &frameGray, Target search);
-  std::vector<Target> checkThreeBlobs(const Blob &blob, const cv::Mat &frameGray, Target search);
-  std::vector<Target> checkTwoRings(const Blob &blob, const cv::Mat &frameGray, Target search);
+  std::vector<Target> checkBlobs(const std::vector<Blob> &blobs, const cv::Mat &frameGray, Target search) const;
+  std::vector<Target> checkOneBlob(const Blob &blob, const cv::Mat &frameGray, Target search) const;
+  std::vector<Target> checkThreeBlobs(const Blob &blob, const cv::Mat &frameGray, Target search) const;
+  std::vector<Target> checkTwoRings(const Blob &blob, const cv::Mat &frameGray, Target search) const;
   
-  bool isEllipse(const Blob &blob, double threshold = -1);
-  bool isEllipseWithoutHole(const Blob &blob, double threshold = -1);
-  bool isConcentricEllispe(const Blob &reference,const Blob &ellipse, double maxCenterDistance, double minFactor, double maxFactor);
+  bool isEllipse(const Blob &blob, double threshold = -1) const;
+  bool isEllipseWithoutHole(const Blob &blob, double threshold = -1) const;
+  bool isConcentricEllispe(const Blob &reference,const Blob &ellipse, double maxCenterDistance, double minFactor, double maxFactor) const;
   
   //Code extractor
-  bool extractCode(const Blob &blob, const cv::Mat &frameGray, Target &target);
-  bool extractCodeFromImage(const cv::Mat &frameGray, cv::Point2d center, double a, double b, double orientation, double angle, std::vector<int> &codeValues, std::vector<cv::Point2f> &codePoints, double shift = 0.0);
+  bool extractCode(const Blob &blob, const cv::Mat &frameGray, Target &target) const;
+  bool extractCodeFromImage(const cv::Mat &frameGray, cv::Point2d center, double a, double b, double orientation, double angle, std::vector<int> &codeValues, std::vector<cv::Point2f> &codePoints, double shift = 0.0) const;
   
-  int alignPointsOnBit(std::vector<int> &code, std::vector<cv::Point2f> &points);
-  double alignPointsOnBit(std::vector<int> &code, std::vector<cv::Point2f> &points, double angle);
+  int alignPointsOnBit(std::vector<int> &code, std::vector<cv::Point2f> &points) const;
+  double alignPointsOnBit(std::vector<int> &code, std::vector<cv::Point2f> &points, double angle) const;
   
-  void filterCode(std::vector<int> &code);
-  std::string code2string(std::vector<int> &code, int nbPointPerBit);
+  void filterCode(std::vector<int> &code) const;
+  std::string code2string(std::vector<int> &code, int nbPointPerBit) const;
   
-  int findHeader(std::string str, std::string headerString);
+  int findHeader(std::string str, std::string headerString) const;
   
-  bool readCode(Target &target, std::string codeString);
+  bool readCode(Target &target, std::string codeString) const;
   
   //Display
-  void drawLineBetweenPoints(cv::Mat &image, cv::Point2f p1, cv::Point2f p2);
+  void drawLineBetweenPoints(cv::Mat &image, cv::Point2f p1, cv::Point2f p2) const;
     
 private:
   int m_binaryThreshold;

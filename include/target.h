@@ -279,4 +279,13 @@ private:
   std::vector<int> m_pointsValue; /*!< Point values at extracted position */
 };
 
+/** Sort targets using message value **/
+struct TargetSorting
+{
+    bool operator()(const Target & a, const Target & b) const
+    {
+      return a.message()<b.message();
+    }
+};
+
 #endif // TARGET_H

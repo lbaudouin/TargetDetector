@@ -37,3 +37,16 @@ ADD_EXECUTABLE(testtypes
 )
 TARGET_LINK_LIBRARIES( testtypes ${PROJECT_NAME})
 ADD_TEST(TestType testtypes ${CMAKE_SOURCE_DIR}/unitTesting/1B_8h180_8m142_bin.png ${CMAKE_SOURCE_DIR}/unitTesting/3B_8h180_8m142_bin.png ${CMAKE_SOURCE_DIR}/unitTesting/2R_8h180_8m142_bin.png)
+
+ADD_EXECUTABLE(autothreshold
+        autothresholdtest.cpp
+)
+TARGET_LINK_LIBRARIES( autothreshold ${PROJECT_NAME})
+ADD_TEST(AutoThreshold autothreshold ${CMAKE_SOURCE_DIR}/unitTesting/1B_8h180_8m142_bin.png)
+
+
+ADD_EXECUTABLE(findtargetsgrid
+        findtargetsgrid.cpp
+)
+TARGET_LINK_LIBRARIES( findtargetsgrid ${PROJECT_NAME})
+ADD_TEST(FindTargetGrid findtargetsgrid ${CMAKE_SOURCE_DIR}/unitTesting/grid_targets_5x5_50.png ${CMAKE_SOURCE_DIR}/unitTesting/grid_targets_4x4_50_unordered.png)

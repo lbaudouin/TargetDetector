@@ -31,12 +31,11 @@ std::string toStr(double d)
 
 int main(int argc, char* argv[])
 {
-  //cv::VideoCapture capture("test.avi");
   cv::VideoCapture capture;
   
   if(argc>1){
     //Try to read camera index
-    int cameraIndex;
+    int cameraIndex = 0;
     std::istringstream iss(argv[1]);
     iss >> std::ws >> cameraIndex >> std::ws;
     if(iss.eof()){
@@ -48,7 +47,7 @@ int main(int argc, char* argv[])
     }
   }else{
     //Default
-    capture.open(1);
+    capture.open(CV_CAP_ANY);
   }
   
   if(!capture.isOpened()){
