@@ -156,6 +156,9 @@ public:
   /** Return the center of target **/
   cv::Point2f center() const { return m_center; }
   
+  /** cv::Point2f type casting operator.**/
+  operator cv::Point2f () const { return center() ; } ;
+  
   /** Return the orientation of target
    * angle is in [0:2/pi]
    * Return -1 if invalid
