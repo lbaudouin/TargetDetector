@@ -48,7 +48,7 @@ int TargetDetector::threshold() const
  * @param searches define the list of targets to search
  * @param step step between two threshold tests
  */
-bool TargetDetector::autoThreshold(const cv::Mat &image, const std::vector<Target> &searches, int step)
+bool TargetDetector::autoThreshold(const cv::Mat &image, const std::vector<Target> &searches, const int &step)
 {  
   int min,max;
   
@@ -81,7 +81,7 @@ bool TargetDetector::autoThreshold(const cv::Mat &image, const std::vector<Targe
  * @param search define the type of target to search
  * @param step step between two threshold tests
  */
-bool TargetDetector::autoThreshold(const cv::Mat &image, Target search, int step)
+bool TargetDetector::autoThreshold(const cv::Mat &image, Target search, const int &step)
 {  
   std::vector<Target> searches;
   searches.push_back(search);
@@ -94,7 +94,7 @@ bool TargetDetector::autoThreshold(const cv::Mat &image, Target search, int step
  * @param step step between two threshold tests
  * @param nbIterationMax number of iteration before leaving the auto-thresholding function
  */
-bool TargetDetector::autoThreshold(cv::VideoCapture &capture, const std::vector<Target> &searches, int step, int nbIterationMax)
+bool TargetDetector::autoThreshold(cv::VideoCapture &capture, const std::vector<Target> &searches, const int &step, const int &nbIterationMax)
 {  
   for(int i=0;i<nbIterationMax;i++){
    
@@ -128,7 +128,7 @@ bool TargetDetector::autoThreshold(cv::VideoCapture &capture, const std::vector<
  * @param step step between two threshold tests
  * @param nbIterationMax number of iteration before leaving the auto-thresholding function
  */
-bool TargetDetector::autoThreshold(cv::VideoCapture &capture, Target search, int step, int nbIterationMax)
+bool TargetDetector::autoThreshold(cv::VideoCapture &capture, Target search, const int &step, const int &nbIterationMax)
 {  
   std::vector<Target> searches;
   searches.push_back(search);
@@ -142,7 +142,7 @@ bool TargetDetector::autoThreshold(cv::VideoCapture &capture, Target search, int
  * @param search is the target to search
  * @param values is an optional list of target values (use values order if provide, inscreasing order if not)
  **/
-bool TargetDetector::findTargetsGrid(const cv::Mat &image, cv::Size size, std::vector<cv::Point2f> &centers, Target search, std::vector<int> values) const
+bool TargetDetector::findTargetsGrid(const cv::Mat &image, cv::Size size, std::vector<cv::Point2f> &centers, const Target &search, const std::vector<int> &values) const
 {
   //Find targets
   std::vector<Target> targets = track(image,search);
@@ -183,7 +183,7 @@ bool TargetDetector::findTargetsGrid(const cv::Mat &image, cv::Size size, std::v
  * @param image where to search target
  * @param searches kind of targets to search
  */
-std::vector<Target> TargetDetector::track(const cv::Mat &image, std::vector<Target> searches) const
+std::vector<Target> TargetDetector::track(const cv::Mat &image, const std::vector<Target> &searches) const
 {
   //Convert from color to gray
   cv::Mat imageGray;
@@ -240,7 +240,7 @@ std::vector<Target> TargetDetector::track(const cv::Mat &image, std::vector<Targ
  * @param image where to search target
  * @param search kind of target to search
  */
-std::vector<Target> TargetDetector::track(const cv::Mat& image, Target search) const
+std::vector<Target> TargetDetector::track(const cv::Mat& image, const Target &search) const
 {
   std::vector<Target> searches;
   searches.push_back(search);
@@ -251,7 +251,7 @@ std::vector<Target> TargetDetector::track(const cv::Mat& image, Target search) c
  * @param frameGray is input gray color image
  * @param thresholdType is the type of threshold used : CV_THRESH_BINARY (black blobs) or CV_THRESH_BINARY_INV (white blobs)
  **/
-std::vector<Blob> TargetDetector::findBlobs(const cv::Mat &frameGray, int thresholdType) const
+std::vector<Blob> TargetDetector::findBlobs(const cv::Mat &frameGray, const int &thresholdType) const
 {
   //Segment image
   cv::Mat segmented;
@@ -321,7 +321,7 @@ Blob TargetDetector::createBlob(int index, const std::vector<std::vector<cv::Poi
  * @param external is the external contour
   * @param ok is set to true if the blob is correct
  **/ 
-Blob TargetDetector::createBlob(std::vector<cv::Point> external, bool &ok) const
+Blob TargetDetector::createBlob(const std::vector<cv::Point> &external, bool &ok) const
 {
   Blob blob;
   blob.area = cv::contourArea( external );
@@ -369,11 +369,12 @@ bool TargetDetector::isEllipse(const Blob &blob, double threshold) const
  * @param blob input blob pointer
  * @param threshold is the ellipse area threshold (area > threshold*a*b*Pi)
  **/
-bool TargetDetector::isEllipseWithoutHole(const Blob &blob, double threshold) const
+bool TargetDetector::isEllipseWithoutHole(const Blob &blob, const double &threshold) const
 {
   if(threshold<=0)
-    threshold = m_ellipseThreshold;
-  return (blob.realArea > threshold*blob.majorAxis*blob.minorAxis*M_PI);
+    return (blob.realArea > m_ellipseThreshold*blob.majorAxis*blob.minorAxis*M_PI);
+  else
+    return (blob.realArea > threshold*blob.majorAxis*blob.minorAxis*M_PI);
 }
 
 /** Check if a blob is a scaled ellipse blob
@@ -382,7 +383,7 @@ bool TargetDetector::isEllipseWithoutHole(const Blob &blob, double threshold) co
  * @param maxCenterDistance is the maximum distance between centers
  * @param minFactor,maxFactor are min/max acceptable factors
  **/
-bool TargetDetector::isConcentricEllispe(const Blob &reference,const Blob &ellipse, double maxCenterDistance, double minFactor, double maxFactor) const
+bool TargetDetector::isConcentricEllispe(const Blob &reference, const Blob &ellipse, const double &maxCenterDistance, const double &minFactor, const double &maxFactor) const
 {
   cv::Point2f referenceCenter = reference.center;
   cv::Point2f ellipseCenter = ellipse.center;
@@ -399,7 +400,7 @@ bool TargetDetector::isConcentricEllispe(const Blob &reference,const Blob &ellip
  * @param frameGray is the grayscale image
  * @param search is the target to find
  **/
-std::vector<Target> TargetDetector::checkBlobs(const std::vector<Blob> &blobs, const cv::Mat &frameGray, Target search) const
+std::vector<Target> TargetDetector::checkBlobs(const std::vector<Blob> &blobs, const cv::Mat &frameGray, const Target &search) const
 {
   std::vector<Target> targets;
   
@@ -438,7 +439,7 @@ std::vector<Target> TargetDetector::checkBlobs(const std::vector<Blob> &blobs, c
  * @param frameGray is the grascale image
  * @param search is the target researched
  **/
-std::vector<Target> TargetDetector::checkOneBlob(const Blob &blob, const cv::Mat &frameGray, Target search) const
+std::vector<Target> TargetDetector::checkOneBlob(const Blob &blob, const cv::Mat &frameGray, const Target &search) const
 {
   std::vector<Target> targets;
     
@@ -476,7 +477,7 @@ std::vector<Target> TargetDetector::checkOneBlob(const Blob &blob, const cv::Mat
  * @param frameGray is the grascale image
  * @param search is the target researched
  **/
-std::vector<Target> TargetDetector::checkThreeBlobs(const Blob &blob, const cv::Mat &frameGray, Target search) const
+std::vector<Target> TargetDetector::checkThreeBlobs(const Blob &blob, const cv::Mat &frameGray, const Target &search) const
 {
   std::vector<Target> targets;
     
@@ -533,7 +534,7 @@ std::vector<Target> TargetDetector::checkThreeBlobs(const Blob &blob, const cv::
  * @param frameGray is the grascale image
  * @param search is the target researched
  **/
-std::vector<Target> TargetDetector::checkTwoRings(const Blob &blob, const cv::Mat &frameGray, Target search) const
+std::vector<Target> TargetDetector::checkTwoRings(const Blob &blob, const cv::Mat &frameGray, const Target &search) const
 {
   std::vector<Target> targets;
     
@@ -792,7 +793,7 @@ bool TargetDetector::extractCode(const Blob &blob, const cv::Mat &frameGray, Tar
  * @param code is the input code (one number for each point)
  * @param nbPointPerBit is the number of points in a bit
  **/
-std::string TargetDetector::code2string(std::vector<int> &code, int nbPointPerBit) const
+std::string TargetDetector::code2string(const std::vector<int> &code, const int &nbPointPerBit) const
 {
   std::string codeString;
   double val = 0;
@@ -887,7 +888,7 @@ int TargetDetector::alignPointsOnBit(std::vector<int> &code, std::vector<cv::Poi
  * @param angle is angle between two points
  * @return Angle shifted
  **/
-double TargetDetector::alignPointsOnBit(std::vector<int> &code, std::vector<cv::Point2f> &points, double angle) const
+double TargetDetector::alignPointsOnBit(std::vector<int> &code, std::vector<cv::Point2f> &points, const double &angle) const
 {
   int shift = alignPointsOnBit(code,points);  
   return angle*shift;
@@ -898,7 +899,7 @@ double TargetDetector::alignPointsOnBit(std::vector<int> &code, std::vector<cv::
  * @param headerString is the header sequence
  * @return The position of header in code sequence, -1 if not found.
  **/
-int TargetDetector::findHeader(std::string str, std::string headerString) const
+int TargetDetector::findHeader(const std::string &str, const std::string &headerString) const
 {
   std::string code = str + str;
   std::size_t found = code.find(headerString);
@@ -914,7 +915,7 @@ int TargetDetector::findHeader(std::string str, std::string headerString) const
  * @param target input/output target
  * @param codeString code of the target under string format
  **/
-bool TargetDetector::readCode(Target &target, std::string codeString) const
+bool TargetDetector::readCode(Target &target, const std::string &codeString) const
 {  
   //Search the header
   std::string header = target.headerString();
@@ -980,6 +981,7 @@ void TargetDetector::drawTargets(cv::Mat &image, const std::vector<Target> &targ
     //Ellipse center
     cv::circle(image,targets[i].center(),2,CV_RGB(255,0,0),-1);
     
+    //Draw contour
     std::vector< std::vector<cv::Point> > contours;
     contours.push_back( targets[i].contours );
     cv::drawContours(image,contours,0,CV_RGB(255,0,0));
@@ -1021,7 +1023,7 @@ void TargetDetector::drawTargets(cv::Mat &image, const std::vector<Target> &targ
       }
     }
     
-      
+    //Print message value
     if(targets[i].message()>=0){
       std::stringstream ss;
       ss << targets[i].message();
@@ -1035,7 +1037,7 @@ void TargetDetector::drawTargets(cv::Mat &image, const std::vector<Target> &targ
  * @param image is input/output image
  * @param p1,p2 are 2D points
  **/
-void TargetDetector::drawLineBetweenPoints(cv::Mat &image, cv::Point2f p1, cv::Point2f p2) const
+void TargetDetector::drawLineBetweenPoints(cv::Mat &image, const cv::Point2f &p1, const cv::Point2f &p2) const
 {
   cv::Point2f n = p2-p1;
   std::swap(n.x,n.y);
