@@ -149,12 +149,7 @@ bool TargetDetector::findTargetsGrid(const cv::Mat &image, cv::Size size, std::v
   
   unsigned int nbTargetsNeeded = size.height*size.width;
   centers.clear();
-  
-  if(targets.size() < nbTargetsNeeded){
-    std::cerr << "Not enough targets: " << targets.size() << "<" << nbTargetsNeeded << std::endl;
-    return false;
-  }
-  
+    
   if(values.size()==nbTargetsNeeded){
     //Find each value
     for(unsigned int i=0; i<values.size(); i++){
