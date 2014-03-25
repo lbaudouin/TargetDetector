@@ -99,8 +99,11 @@ int main(int argc, char* argv[])
     double fps = 1.0/FPStimer.s_elapsed();
 
     FPStimer.restart();
+    cv::putText(image,toStr(fps),cv::Point2f(5,25),cv::FONT_HERSHEY_SIMPLEX,1,CV_RGB(255,255,255),3);
     cv::putText(image,toStr(fps),cv::Point2f(5,25),cv::FONT_HERSHEY_SIMPLEX,1,CV_RGB(0,0,0),2);
+    cv::putText(image,toStr(execTime),cv::Point2f(5,50),cv::FONT_HERSHEY_SIMPLEX,1,CV_RGB(255,255,255),3);
     cv::putText(image,toStr(execTime),cv::Point2f(5,50),cv::FONT_HERSHEY_SIMPLEX,1,CV_RGB(0,0,0),2);
+    cv::putText(image,toStr(targets.size()),cv::Point2f(5,75),cv::FONT_HERSHEY_SIMPLEX,1,CV_RGB(255,255,255),3);
     cv::putText(image,toStr(targets.size()),cv::Point2f(5,75),cv::FONT_HERSHEY_SIMPLEX,1,CV_RGB(0,0,0),2);
     
     //Display image

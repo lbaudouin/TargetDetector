@@ -65,7 +65,7 @@ protected:
   std::vector<Target> checkThreeBlobs(const Blob &blob, const cv::Mat &frameGray, const Target &search) const;
   std::vector<Target> checkTwoRings(const Blob &blob, const cv::Mat &frameGray, const Target &search) const;
   
-  bool isEllipse(const Blob &blob, double threshold = -1) const;
+  bool isEllipse(const Blob &blob, const double &threshold = -1) const;
   bool isEllipseWithoutHole(const Blob &blob, const double &threshold = -1) const;
   bool isConcentricEllispe(const Blob &reference, const Blob &ellipse, const double &maxCenterDistance, const double &minFactor, const double &maxFactor) const;
   
