@@ -90,7 +90,7 @@ bool TargetDetector::autoThreshold(const cv::Mat &image, Target search, int step
 
 /** Auto determine the optimal binary threshold
  * @param capture video capture object to auto grab images
- * @param search define the type of target to search
+ * @param searches define types of target to search
  * @param step step between two threshold tests
  * @param nbIterationMax number of iteration before leaving the auto-thresholding function
  */
@@ -164,16 +164,16 @@ bool TargetDetector::findTargetsGrid(const cv::Mat &image, cv::Size size, std::v
 	   break;
 	 }
       }
-    } 
+    }
     if(centers.size()!=values.size())
       return false;
   }else{
-    if(targets.size() != nbTargetsNeeded)
-      return false;
     std::sort(targets.begin(),targets.end(),TargetSorting());
     for(unsigned int i=0; i<targets.size(); i++){
       centers.push_back (targets[i].center());
     }
+    if(targets.size() != nbTargetsNeeded)
+      return false;
   }
      
   return true;

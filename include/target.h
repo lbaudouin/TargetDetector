@@ -282,10 +282,11 @@ private:
 /** Sort targets using message value **/
 struct TargetSorting
 {
-    bool operator()(const Target & a, const Target & b) const
-    {
-      return a.message()<b.message();
-    }
+  /** Operator to sort targets using increasing order of messages **/
+  bool operator()(const Target & a, const Target & b) const
+  {
+    return a.message()<b.message();
+  }
 };
 
 #endif // TARGET_H
