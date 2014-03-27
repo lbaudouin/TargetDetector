@@ -207,14 +207,14 @@ std::vector<Target> TargetDetector::track(const cv::Mat &image, const std::vecto
     for(unsigned int j=0;j<blobs[i].children.size();j++){
       contours.clear();
       contours.push_back( blobs[i].children[j].contours );
-      if(isEllipse(blobs[i].children[j]))
+      if(isEllipse(blobs[i].children[j],0.9))
 	cv::drawContours(color,contours,0,CV_RGB(0,255,0),2);
       else
 	cv::drawContours(color,contours,0,CV_RGB(255,255,0),2);
       for(unsigned int k=0;k<blobs[i].children[j].children.size();k++){
 	contours.clear();
 	contours.push_back( blobs[i].children[j].children[k].contours );
-	if(isEllipse(blobs[i].children[j].children[k]))
+	if(isEllipse(blobs[i].children[j].children[k],0.85))
 	  cv::drawContours(color,contours,0,CV_RGB(0,0,255),2);
 	else
 	  cv::drawContours(color,contours,0,CV_RGB(0,255,255),2);
@@ -474,7 +474,7 @@ std::vector<Target> TargetDetector::checkBlobs(const std::vector<Blob> &blobs, c
       }
       break;
   }
-
+  
   return targets;
 }
 
@@ -524,9 +524,9 @@ std::vector<Target> TargetDetector::checkOneBlob(const Blob &blob, const cv::Mat
 std::vector<Target> TargetDetector::checkThreeBlobs(const Blob &blob, const cv::Mat &frameGray, const Target &search) const
 {
   std::vector<Target> targets;
-
+    
   if(blob.isValid){
-    if(isEllipse(blob)){
+    if(isEllipse(blob,0.95)){
       //Find internal circle
       for(unsigned int i=0;i<blob.children.size();i++){
 	if(blob.children[i].index==blob.index || !blob.children[i].isValid)
@@ -537,7 +537,7 @@ std::vector<Target> TargetDetector::checkThreeBlobs(const Blob &blob, const cv::
 	    if(blob.children[i].children[j].index==blob.children[i].index || blob.children[i].children[j].index==blob.index || !blob.children[i].children[j].isValid)
 	      continue;
 	
-	    if(isEllipseWithoutHole(blob.children[i].children[j],0.9) && isConcentricEllispe(blob, blob.children[i].children[j], blob.minorAxis/10.0, 0.5/3.0, 1.5/3.0)){
+	    if(isEllipseWithoutHole(blob.children[i].children[j],0.8) && isConcentricEllispe(blob, blob.children[i].children[j], blob.minorAxis/10.0, 0.5/3.0, 1.5/3.0)){
 	      //Create target and set center
 	      Target target = search;
 	      target.setCenter(  0.5* (blob.children[i].children[j].center + blob.center) );
@@ -595,7 +595,7 @@ std::vector<Target> TargetDetector::checkTwoRings(const Blob &blob, const cv::Ma
 	    for(unsigned int k=0;k<blob.children[i].children[j].children.size();k++){
 	       if(blob.children[i].children[j].children[k].index==blob.children[i].index || blob.children[i].children[j].children[k].index==blob.index || !blob.children[i].children[j].children[k].isValid)
 		continue;
-	      if(isEllipseWithoutHole(blob.children[i].children[j].children[k],0.9) && isConcentricEllispe(blob, blob.children[i].children[j].children[k], blob.minorAxis/10.0, 0.5/6.0, 1.5/6.0)){
+	      if(isEllipseWithoutHole(blob.children[i].children[j].children[k],0.8) && isConcentricEllispe(blob, blob.children[i].children[j].children[k], blob.minorAxis/10.0, 0.5/6.0, 1.5/6.0)){
 		//Create target and set center
 		Target target = search;
 		target.setCenter(  0.5* (blob.children[i].children[j].children[k].center + blob.center) );
@@ -614,7 +614,7 @@ std::vector<Target> TargetDetector::checkTwoRings(const Blob &blob, const cv::Ma
 	    //If normal
 	    if(blob.children[i].children[j].index==blob.children[i].index || blob.children[i].children[j].index==blob.index || !blob.children[i].children[j].isValid)
 	      continue;
-	    if(isEllipseWithoutHole(blob.children[i].children[j],0.5) && isConcentricEllispe(blob, blob.children[i].children[j], blob.minorAxis/10.0, 0.5/6.0, 1.5/6.0)){
+	    if(isEllipseWithoutHole(blob.children[i].children[j],0.8) && isConcentricEllispe(blob, blob.children[i].children[j], blob.minorAxis/10.0, 0.5/6.0, 1.5/6.0)){
 	      //Create target and set center
 	      Target target = search;
 	      target.setCenter(  0.5* (blob.children[i].children[j].center + blob.center) );

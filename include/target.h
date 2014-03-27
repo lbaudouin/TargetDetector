@@ -236,13 +236,13 @@ protected:
 	m_nbPointPerBit = 16;
 	break;
       case ThreeBlobs:
-	m_radiusFactor = 0.97*3.0;
+	m_radiusFactor = 0.99*3.0;
 	m_radiusFactor2 = -1;
 	m_nbPointPerBit = 16;
 	break;
       case TwoRings:
-	m_radiusFactor = 0.97*5.0/6.0;
-	m_radiusFactor2 = 0.97*7.0/6.0;
+	m_radiusFactor = 0.99*5.0/6.0;
+	m_radiusFactor2 = 0.99*7.0/6.0;
 	m_nbPointPerBit = 16;
 	break;
     }

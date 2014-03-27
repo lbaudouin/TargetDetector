@@ -31,8 +31,10 @@ int main(int argc, char* argv[])
   cv::drawChessboardCorners(I1,size5x5,centers,okOrdered);
   cv::imwrite("OrderedGrid.png",I1);
   
-  if(!okOrdered)
-    return true;
+#ifdef TARGET_DEBUG
+  cv::imshow("Result",I1);
+  cv::waitKey(0);
+#endif
   
   int val[16] = {5, 50, 55, 15, 10, 95, 125, 255, 25, 0, 65, 100, 105, 85, 30, 235};
   
@@ -45,8 +47,13 @@ int main(int argc, char* argv[])
   cv::drawChessboardCorners(I2,size4x4,centers,okUnordered);
   cv::imwrite("UnorderedGrid.png",I2);
   
-  if(!okUnordered)
-    return true;
+#ifdef TARGET_DEBUG
+  cv::imshow("Result",I2);
+  cv::waitKey(0);
+#endif
   
-  return false;
+  if(!okUnordered && !okOrdered)
+    return true;
+  else
+    return false;
 }
