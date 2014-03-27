@@ -30,7 +30,7 @@ int main(int argc, char* argv[])
   int nbTargets = targets.size();
   std::cout << nbTargets << std::endl;
   
-#if TARGET_DEBUG
+#ifdef TARGET_DEBUG
   cv::imshow("Result",I);
   cv::waitKey(0);
 #endif

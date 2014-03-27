@@ -29,6 +29,7 @@ SET(CXX_DISABLE_WERROR 1)
 OPTION(BUILD_SHARED_LIBRARY "Build the shared library." TRUE)
 OPTION(INSTALL_BINARIES "Install binaries." FALSE)
 OPTION(ENABLE_TEST "Enable test" FALSE)
+OPTION(TARGET_DEBUG "Enable target debug" FALSE)
 
 #Find packages
 FIND_PACKAGE(OpenCV REQUIRED)
@@ -39,6 +40,10 @@ include_directories( ${CMAKE_SOURCE_DIR}/include/ )
 #Configure
 SET(${PROJECT_NAME}_CXXFLAGS "")
 SET(${PROJECT_NAME}_LIBS "")
+
+IF(TARGET_DEBUG)
+  add_definitions( "-DTARGET_DEBUG" )
+ENDIF(TARGET_DEBUG)
 
 #Set sources files
 file(GLOB ${PROJECT_NAME}_SRCS src/*.cpp) 

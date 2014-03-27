@@ -64,7 +64,7 @@ int main(int argc, char* argv[])
   searches.push_back( Target(Target::TwoRings,8,8,false,180) );
   
   //Run autoThreshold
-  //if(!targetDetector.autoThreshold(capture,searches[0],10,250))
+  //if(!targetDetector.autoThreshold(capture,searches[0],10,250,true))
     targetDetector.setThreshold(125);
     
   

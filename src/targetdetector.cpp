@@ -17,7 +17,7 @@
 /** Create TargetDetector object
  * @param threshold define the binary threshold of gray scale image
  */
-TargetDetector::TargetDetector(int threshold) : m_binaryThreshold(threshold), m_ellipseThreshold(0.99)
+TargetDetector::TargetDetector(int threshold) : m_binaryThreshold(threshold), m_ellipseThreshold(0.95)
 {
 
 }
@@ -94,7 +94,7 @@ bool TargetDetector::autoThreshold(const cv::Mat &image, Target search, const in
  * @param step step between two threshold tests
  * @param nbIterationMax number of iteration before leaving the auto-thresholding function
  */
-bool TargetDetector::autoThreshold(cv::VideoCapture &capture, const std::vector<Target> &searches, const int &step, const int &nbIterationMax)
+bool TargetDetector::autoThreshold(cv::VideoCapture &capture, const std::vector<Target> &searches, const int &step, const int &nbIterationMax, const bool display)
 {
   for(int i=0;i<nbIterationMax;i++){
 
@@ -102,23 +102,27 @@ bool TargetDetector::autoThreshold(cv::VideoCapture &capture, const std::vector<
     cv::Mat image;
     capture >> image;
 
-    //Display a clone
-    cv::Mat imageClone = image.clone();
-    std::stringstream ss;
-    ss << i << "/" << nbIterationMax;
-    cv::putText(imageClone,ss.str(),cv::Point2f(5,25),cv::FONT_HERSHEY_SIMPLEX,1,CV_RGB(255,255,255),3);
-    cv::putText(imageClone,ss.str(),cv::Point2f(5,25),cv::FONT_HERSHEY_SIMPLEX,1,CV_RGB(0,0,0),2);
-    cv::imshow("autoThreshold",imageClone);
-    char key = cv::waitKey(5);
-    if(key!=-1)
-      break;
+    if(display){
+      //Display a clone
+      cv::Mat imageClone = image.clone();
+      std::stringstream ss;
+      ss << i << "/" << nbIterationMax;
+      cv::putText(imageClone,ss.str(),cv::Point2f(5,25),cv::FONT_HERSHEY_SIMPLEX,1,CV_RGB(255,255,255),3);
+      cv::putText(imageClone,ss.str(),cv::Point2f(5,25),cv::FONT_HERSHEY_SIMPLEX,1,CV_RGB(0,0,0),2);
+      cv::imshow("autoThreshold",imageClone);
+      char key = cv::waitKey(5);
+      if(key!=-1)
+	break;
+    }
 
     if(autoThreshold(image,searches,step))
       break;
   }
 
   //Destroy display window
-  cv::destroyWindow("autoThreshold");
+  if(display){
+    cv::destroyWindow("autoThreshold");
+  }
   return true;
 }
 
@@ -128,11 +132,11 @@ bool TargetDetector::autoThreshold(cv::VideoCapture &capture, const std::vector<
  * @param step step between two threshold tests
  * @param nbIterationMax number of iteration before leaving the auto-thresholding function
  */
-bool TargetDetector::autoThreshold(cv::VideoCapture &capture, Target search, const int &step, const int &nbIterationMax)
+bool TargetDetector::autoThreshold(cv::VideoCapture &capture, Target search, const int &step, const int &nbIterationMax, const bool display)
 {
   std::vector<Target> searches;
   searches.push_back(search);
-  return autoThreshold(capture, searches, step, nbIterationMax);
+  return autoThreshold(capture, searches, step, nbIterationMax, display);
 }
 
 /** Find a grid of targets in the image
@@ -191,26 +195,26 @@ std::vector<Target> TargetDetector::track(const cv::Mat &image, const std::vecto
   //Extract blobs
   std::vector<Blob> blobs = findBlobs(imageGray);
 
-#if TARGET_DEBUG
+#ifdef TARGET_DEBUG
   cv::Mat color = image.clone();
   for(unsigned int i=0;i<blobs.size();i++){
     std::vector< std::vector<cv::Point> > contours;
     contours.push_back( blobs[i].contours );
-    if(isEllipse(blobs[i],0.95))
+    if(isEllipse(blobs[i]))
       cv::drawContours(color,contours,0,CV_RGB(255,0,0),2);
     else
       cv::drawContours(color,contours,0,CV_RGB(255,255,255),2);
     for(unsigned int j=0;j<blobs[i].children.size();j++){
       contours.clear();
       contours.push_back( blobs[i].children[j].contours );
-      if(isEllipse(blobs[i].children[j],0.80))
+      if(isEllipse(blobs[i].children[j]))
 	cv::drawContours(color,contours,0,CV_RGB(0,255,0),2);
       else
 	cv::drawContours(color,contours,0,CV_RGB(255,255,0),2);
       for(unsigned int k=0;k<blobs[i].children[j].children.size();k++){
 	contours.clear();
 	contours.push_back( blobs[i].children[j].children[k].contours );
-	if(isEllipse(blobs[i].children[j].children[k],0.5))
+	if(isEllipse(blobs[i].children[j].children[k]))
 	  cv::drawContours(color,contours,0,CV_RGB(0,0,255),2);
 	else
 	  cv::drawContours(color,contours,0,CV_RGB(0,255,255),2);
@@ -253,24 +257,22 @@ std::vector<Blob> TargetDetector::findBlobs(const cv::Mat &frameGray, const int 
   cv::threshold(frameGray, segmented, m_binaryThreshold, 255, CV_THRESH_BINARY_INV);
   //cv::Mat segmented = thresholdType==CV_THRESH_BINARY ? (frameGray > m_threshold) : (frameGray < m_threshold);
 
-#if TARGET_DEBUG
+#ifdef TARGET_DEBUG
   cv::imshow("Binary",segmented);
   cv::Mat segmentedClone = segmented.clone();
 #endif
-
 
   std::vector<std::vector<cv::Point> > contours;
   std::vector<cv::Vec4i> hierarchy;
 
   cv::findContours(segmented, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE);
 
-#if TARGET_DEBUG
+#ifdef TARGET_DEBUG
   cv::Mat contoursImage;
   cv::cvtColor(segmentedClone,contoursImage,CV_GRAY2BGR);
-
+  
   int idx = 0;
-  for( ; idx >= 0; idx = hierarchy[idx][0] )
-  {
+  for( ; idx>=0; idx=hierarchy[idx][0]){
       cv::Scalar color( rand()&255, rand()&255, rand()&255 );
       cv::drawContours( contoursImage, contours, idx, color, CV_FILLED, 8, hierarchy );
   }
@@ -291,7 +293,27 @@ std::vector<Blob> TargetDetector::findBlobs(const cv::Mat &frameGray, const int 
       blobs.push_back(blob);
     index = hierarchy[index][0];
   }
-
+  
+#ifdef TARGET_DEBUG
+  cv::Mat ellipseImage;
+  cv::cvtColor(segmentedClone,ellipseImage,CV_GRAY2BGR);
+  
+  for(unsigned int i=0;i<blobs.size();i++){
+    if(blobs[i].isValid)
+      cv::ellipse(ellipseImage, cv::RotatedRect(blobs[i].center,cv::Size(blobs[i].minorAxis*2.0,blobs[i].majorAxis*2.0),blobs[i].orientation), CV_RGB(255,0,0), 2 );
+    for(unsigned int j=0;j<blobs[i].children.size();j++){
+      if(blobs[i].children[j].isValid)
+	cv::ellipse(ellipseImage, cv::RotatedRect(blobs[i].children[j].center,cv::Size(blobs[i].children[j].minorAxis*2.0,blobs[i].children[j].majorAxis*2.0),blobs[i].children[j].orientation), CV_RGB(0,255,0), 2 );
+      for(unsigned int k=0;k<blobs[i].children[j].children.size();k++){
+	if(blobs[i].children[j].children[k].isValid)
+	  cv::ellipse(ellipseImage, cv::RotatedRect(blobs[i].children[j].children[k].center,cv::Size(blobs[i].children[j].children[k].minorAxis*2.0,blobs[i].children[j].children[k].majorAxis*2.0),blobs[i].children[j].children[k].orientation), CV_RGB(0,0,255), 2 );
+      }
+    }
+  }
+  
+  cv::imshow("Ellipse",ellipseImage);
+#endif
+  
   return blobs;
 }
 
@@ -335,6 +357,7 @@ Blob TargetDetector::createBlob(int index, const std::vector<std::vector<cv::Poi
 Blob TargetDetector::createBlob(const std::vector<cv::Point> &external, bool &ok) const
 {
   Blob blob;
+  blob.isValid = false;
   blob.area = cv::contourArea( external );
   blob.realArea = blob.area;
 
@@ -342,25 +365,34 @@ Blob TargetDetector::createBlob(const std::vector<cv::Point> &external, bool &ok
     ok = false;
     return blob;
   }
-
-  if( external.size() > 5 ){
-    cv::RotatedRect ellipse = cv::fitEllipse( external );
+  
+  std::vector<cv::Point> hull;
+  cv::convexHull(external,hull);
+  
+  if( hull.size() > 5 ){
+    cv::RotatedRect ellipse = cv::fitEllipse( hull );
+    
+    if(ellipse.size.width<=0 || ellipse.size.height<=0){
+      ok = false;
+      std::cerr << "Bad ellipse" << std::endl;
+      return blob;
+    }      
+    
     blob.center = ellipse.center;
     blob.orientation = ellipse.angle;
     blob.majorAxis =  std::max(ellipse.size.width,ellipse.size.height) / 2.0;
     blob.minorAxis =  std::min(ellipse.size.width,ellipse.size.height) / 2.0;
     blob.contours = external;
 
+    //Ellipse axis ratio too important
     if(blob.majorAxis>100.0*blob.minorAxis || blob.majorAxis<1.0){
       ok = false;
       return blob;
     }
 
     blob.isValid = true;
-  }else{
-    blob.isValid = false;
   }
-
+  
   ok = true;
   return blob;
 }
@@ -456,7 +488,7 @@ std::vector<Target> TargetDetector::checkOneBlob(const Blob &blob, const cv::Mat
   std::vector<Target> targets;
 
   if(blob.isValid){
-    if(isEllipseWithoutHole(blob,0.95)){
+    if(isEllipseWithoutHole(blob)){
       //Create target and set center
       Target target = search;
       target.setCenter( blob.center );
@@ -494,7 +526,7 @@ std::vector<Target> TargetDetector::checkThreeBlobs(const Blob &blob, const cv::
   std::vector<Target> targets;
 
   if(blob.isValid){
-    if(isEllipse(blob,0.95)){
+    if(isEllipse(blob)){
       //Find internal circle
       for(unsigned int i=0;i<blob.children.size();i++){
 	if(blob.children[i].index==blob.index || !blob.children[i].isValid)
@@ -505,7 +537,7 @@ std::vector<Target> TargetDetector::checkThreeBlobs(const Blob &blob, const cv::
 	    if(blob.children[i].children[j].index==blob.children[i].index || blob.children[i].children[j].index==blob.index || !blob.children[i].children[j].isValid)
 	      continue;
 	
-	    if(isEllipseWithoutHole(blob.children[i].children[j],0.75) && isConcentricEllispe(blob, blob.children[i].children[j], blob.minorAxis/10.0, 0.5/3.0, 1.5/3.0)){
+	    if(isEllipseWithoutHole(blob.children[i].children[j],0.9) && isConcentricEllispe(blob, blob.children[i].children[j], blob.minorAxis/10.0, 0.5/3.0, 1.5/3.0)){
 	      //Create target and set center
 	      Target target = search;
 	      target.setCenter(  0.5* (blob.children[i].children[j].center + blob.center) );
@@ -516,7 +548,7 @@ std::vector<Target> TargetDetector::checkThreeBlobs(const Blob &blob, const cv::
 		if(extractCode(blob, frameGray, target)){
 		  targets.push_back(target);
 		}else{
-#if TARGET_DEBUG
+#ifdef TARGET_DEBUG
 		  std::cerr << "checkThreeBlobs: extractCode failed" << std::endl;
 #endif
 		}
@@ -551,7 +583,7 @@ std::vector<Target> TargetDetector::checkTwoRings(const Blob &blob, const cv::Ma
   std::vector<Target> targets;
 
   if(blob.isValid){
-    if(isEllipse(blob,0.95)){
+    if(isEllipse(blob)){
       //Find internal circle
       for(unsigned int i=0;i<blob.children.size();i++){
 	if(blob.children[i].index==blob.index || !blob.children[i].isValid)
@@ -563,7 +595,7 @@ std::vector<Target> TargetDetector::checkTwoRings(const Blob &blob, const cv::Ma
 	    for(unsigned int k=0;k<blob.children[i].children[j].children.size();k++){
 	       if(blob.children[i].children[j].children[k].index==blob.children[i].index || blob.children[i].children[j].children[k].index==blob.index || !blob.children[i].children[j].children[k].isValid)
 		continue;
-	      if(isEllipseWithoutHole(blob.children[i].children[j].children[k],0.5) && isConcentricEllispe(blob, blob.children[i].children[j].children[k], blob.minorAxis/10.0, 0.5/6.0, 1.5/6.0)){
+	      if(isEllipseWithoutHole(blob.children[i].children[j].children[k],0.9) && isConcentricEllispe(blob, blob.children[i].children[j].children[k], blob.minorAxis/10.0, 0.5/6.0, 1.5/6.0)){
 		//Create target and set center
 		Target target = search;
 		target.setCenter(  0.5* (blob.children[i].children[j].children[k].center + blob.center) );
@@ -964,7 +996,7 @@ bool TargetDetector::readCode(Target &target, const std::string &codeString) con
 
       if(parityBit!=codeParity){
 	//Wrong parity bits
-#if TARGET_DEBUG
+#ifdef TARGET_DEBUG
 	std::cerr << "Wrong parity bit" << std::endl;
 #endif
 	return false;
@@ -976,9 +1008,6 @@ bool TargetDetector::readCode(Target &target, const std::string &codeString) con
 
     return true;
   }else{
-#if TARGET_DEBUG
-    std::cerr << "code: " << str << std::endl << "header: " << header << std::endl;
-#endif
     return false;
   }
 }

@@ -15,8 +15,6 @@
 #ifndef TARGETDETECTOR_H
 #define TARGETDETECTOR_H
 
-#define TARGET_DEBUG false
-
 #include <vector>
 #include <iostream>
 
@@ -49,9 +47,9 @@ public:
   int threshold() const;
   
   bool autoThreshold(const cv::Mat &image, Target search, const int &step = 10);
-  bool autoThreshold(cv::VideoCapture &capture, Target search, const int &step = 10, const int &nbIterationMax = 100);
+  bool autoThreshold(cv::VideoCapture &capture, Target search, const int &step = 10, const int &nbIterationMax = 100, const bool display = false);
   bool autoThreshold(const cv::Mat &image, const std::vector<Target> &search, const int &step = 10);
-  bool autoThreshold(cv::VideoCapture &capture, const std::vector<Target> &search, const int &step = 10, const int &nbIterationMax = 100);
+  bool autoThreshold(cv::VideoCapture &capture, const std::vector<Target> &search, const int &step = 10, const int &nbIterationMax = 100, const bool display = false);
     
 protected:
   //Find blobs
