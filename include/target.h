@@ -213,7 +213,7 @@ public:
    * @param index is the index of the first header point
    **/
   void setFirstHeaderIndex(int index) {
-    assert(index<m_points.size());
+    assert((uint)index<m_points.size());
     m_firstHeaderIndex = index;
     cv::Point2f delta = m_points[index] - m_center;
     m_orientation = std::atan2( delta.y, delta.x );
