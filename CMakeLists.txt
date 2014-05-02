@@ -7,7 +7,7 @@
 #
 # This library is distributed in the hope that it will be useful, but
 # WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
 # General Public License for more details. You should have
 # received a copy of the GNU General Public License along with
 # this library. If not, see <http://www.gnu.org/licenses/>.
@@ -19,16 +19,23 @@ SET(PROJECT_NAME target)
 SET(PROJECT_DESCRIPTION "Detect targets in images")
 SET(PROJECT_URL "")
 SET(PROJECT_VERSION "0.0.1")
-SET(PROJECT_REQUIREMENTS "OpenCV")
+SET(PROJECT_REQUIREMENTS "opencv")
 
-SET(CUSTOM_HEADER_DIR "${PROJECT_NAME}")
+#Set default build type
+IF (NOT CMAKE_BUILD_TYPE)
+  SET(CMAKE_BUILD_TYPE Release CACHE STRING
+    "Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel."
+    FORCE)
+ENDIF (NOT CMAKE_BUILD_TYPE)
 
-SET(CXX_DISABLE_WERROR 1)
+#Set CXX parameters
+#SET(CXX_DISABLE_WERROR 1)
 
 #Options
-OPTION(BUILD_SHARED_LIBRARY "Build the shared library." TRUE)
-OPTION(INSTALL_BINARIES "Install binaries." FALSE)
-OPTION(ENABLE_TEST "Enable test" FALSE)
+OPTION(BUILD_SHARED_LIBS "Build the shared library" TRUE)
+OPTION(BUILD_TEST "Build test" FALSE)
+OPTION(INSTALL_DOC "Install documentation" TRUE)
+OPTION(INSTALL_BINARIES "Install binaries" FALSE)
 OPTION(TARGET_DEBUG "Enable target debug" FALSE)
 
 #Find packages
@@ -46,52 +53,55 @@ IF(TARGET_DEBUG)
 ENDIF(TARGET_DEBUG)
 
 #Set sources files
-file(GLOB ${PROJECT_NAME}_SRCS src/*.cpp) 
+file(GLOB ${PROJECT_NAME}_SRCS src/*.cpp)
 
 #Set headers files
 file(GLOB ${PROJECT_NAME}_HDRS include/*.h)
 
 #Build library
-IF(BUILD_SHARED_LIBRARY)
-  add_library ( ${PROJECT_NAME} SHARED ${${PROJECT_NAME}_SRCS})
-ELSE(BUILD_SHARED_LIBRARY)
-  add_library ( ${PROJECT_NAME} ${${PROJECT_NAME}_SRCS})
-ENDIF(BUILD_SHARED_LIBRARY)
+#Library type (static|shared) depend on BUILD_SHARED_LIBS variable
+add_library ( ${PROJECT_NAME} ${${PROJECT_NAME}_SRCS})
 TARGET_LINK_LIBRARIES( ${PROJECT_NAME} ${OpenCV_LIBS})
 LINK_DIRECTORIES( ${PROJECT_BINARY_DIR} )
 
 #Build binaries
-IF(EXISTS ${CMAKE_SOURCE_DIR}/bin)
+IF(EXISTS ${CMAKE_SOURCE_DIR}/bin/CMakeLists.txt)
   ADD_SUBDIRECTORY(bin)
 ENDIF()
 
 #Build unit testing
-IF(ENABLE_TEST)
+IF(BUILD_TEST)
   ENABLE_TESTING()
-  IF(EXISTS ${CMAKE_SOURCE_DIR}/unitTesting)
+  IF(EXISTS ${CMAKE_SOURCE_DIR}/unitTesting/CMakeLists.txt)
     ADD_SUBDIRECTORY(unitTesting)
   ENDIF()
-ENDIF(ENABLE_TEST)
+ENDIF(BUILD_TEST)
 
 #Install headers
 INSTALL(FILES ${${PROJECT_NAME}_HDRS}
 	DESTINATION ${CMAKE_INSTALL_PREFIX}/include/${PROJECT_NAME}/
-        PERMISSIONS OWNER_READ GROUP_READ WORLD_READ OWNER_WRITE
-)
+        PERMISSIONS OWNER_READ GROUP_READ WORLD_READ OWNER_WRITE)
 
 #Install library
-INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_SHARED_LIBRARY_PREFIX}${PROJECT_NAME}${CMAKE_SHARED_LIBRARY_SUFFIX} 
+INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_SHARED_LIBRARY_PREFIX}${PROJECT_NAME}${CMAKE_SHARED_LIBRARY_SUFFIX}
 	DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/
-        PERMISSIONS OWNER_READ GROUP_READ WORLD_READ OWNER_WRITE
-)
+        PERMISSIONS OWNER_READ GROUP_READ WORLD_READ OWNER_WRITE)
 
 #Configure and install LibraryConfig.cmake.in
 CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/LibraryConfig.cmake.in
-  ${PROJECT_BINARY_DIR}/${PROJECT_NAME}Config.cmake )
+  "${PROJECT_BINARY_DIR}/${PROJECT_NAME}Config.cmake" )
 
 INSTALL(FILES ${PROJECT_BINARY_DIR}/${PROJECT_NAME}Config.cmake
 	DESTINATION ${CMAKE_INSTALL_PREFIX}/share/${PROJECT_NAME}
-        PERMISSIONS OWNER_READ GROUP_READ WORLD_READ OWNER_WRITE )
+        PERMISSIONS OWNER_READ GROUP_READ WORLD_READ OWNER_WRITE)
+
+#Configure and install LibraryConfigVersion.cmake.in
+CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/LibraryConfigVersion.cmake.in
+  "${PROJECT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake" @ONLY)
+
+INSTALL(FILES ${PROJECT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake
+	DESTINATION ${CMAKE_INSTALL_PREFIX}/share/${PROJECT_NAME}
+        PERMISSIONS OWNER_READ GROUP_READ WORLD_READ OWNER_WRITE)
 
 #Configure and install Library.pc.cmake
 SET(install_pkg_prefix "\${prefix}")
@@ -100,7 +110,7 @@ SET(install_pkg_libdir "\${libdir}")
 SET(install_pkg_include_dir "\${includedir}")
 SET(install_libdir_pkgconfig ${CMAKE_INSTALL_PREFIX}/lib/pkgconfig)
 
-CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/Library.pc.cmake
+CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/Library.pc.in
 		 ${PROJECT_BINARY_DIR}/${PROJECT_NAME}.pc )
 
 INSTALL(FILES ${PROJECT_BINARY_DIR}/${PROJECT_NAME}.pc
@@ -110,10 +120,17 @@ INSTALL(FILES ${PROJECT_BINARY_DIR}/${PROJECT_NAME}.pc
 #Create documentation
 FIND_PACKAGE( Doxygen )
 
-CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/doc/Doxyfile.in ${PROJECT_BINARY_DIR}/doc/Doxyfile )
-
 IF(DOXYGEN_FOUND)
-  add_custom_target(doc
+  CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/doc/Doxyfile.in ${PROJECT_BINARY_DIR}/doc/Doxyfile )
+  #Add doc target
+  ADD_CUSTOM_TARGET(doc
   ${DOXYGEN_EXECUTABLE} ${PROJECT_BINARY_DIR}/doc/Doxyfile
   COMMENT "Generating API documentation with Doxygen" VERBATIM)
+  IF(INSTALL_DOC)
+    #Force build doc before install
+    INSTALL( CODE "EXEC_PROGRAM(${CMAKE_BUILD_TOOL} ARGS doc)" )
+    #Install documentation
+    INSTALL(DIRECTORY ${PROJECT_BINARY_DIR}/doc/html/
+	    DESTINATION ${CMAKE_INSTALL_PREFIX}/share/doc/${PROJECT_NAME})
+  ENDIF(INSTALL_DOC)
 ENDIF(DOXYGEN_FOUND)

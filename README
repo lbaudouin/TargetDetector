@@ -23,19 +23,20 @@ Build project:
 $ cmake .. 
 $ make -j 3
 
-To accelerate the process, use release version
-$ cmake -DCMAKE_BUILD_TYPE=Release ..
+To debug the process, use debug version
+$ cmake -DCMAKE_BUILD_TYPE=Debug ..
 $ make -j 3
 
 Install:
 $ make
 $ make install
+(The documentation is build before installing if needed)
 
 Create documentation:
 $ make doc
 $ firefox ./doc/html/index.html &
 
 Create tests:
-$ cmake -DENABLE_TEST=ON .. 
+$ cmake -DBUILD_TEST=ON .. 
 $ make
 $ make test
