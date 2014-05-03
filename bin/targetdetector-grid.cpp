@@ -7,13 +7,13 @@
 //
 // This library is distributed in the hope that it will be useful, but
 // WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
 // General Public License for more details. You should have
 // received a copy of the GNU General Public License along with
 // this library. If not, see <http://www.gnu.org/licenses/>.
 
 #include <iostream>
-#include "../include/targetdetector.h"
+#include <targetdetector.h>
 
 #include "timer.h"
 
@@ -22,17 +22,15 @@
 * @em baudouin.leo@gmail.com
 */
 
-std::string toStr(double d)
-{
-    std::stringstream ss;
-    ss << d;
-    return ss.str();
-}
+void help(std::string exec);
+bool isNumber(const std::string &str, int &nb);
+std::string toStr(double d);
 
 int main(int argc, char* argv[])
 {
   cv::VideoCapture capture;
-  
+  bool isVideo = true;
+
   if(argc>1){
     //Try to read camera index
     int cameraIndex = 0;
@@ -40,83 +38,142 @@ int main(int argc, char* argv[])
     iss >> std::ws >> cameraIndex >> std::ws;
     if(iss.eof()){
       //Open camera
-      capture.open(cameraIndex); 
+      capture.open(cameraIndex);
     }else{
       //Open file
-      capture.open(argv[1]);          
+      capture.open(argv[1]);
+      if(capture.get(CV_CAP_PROP_FRAME_COUNT)==1)
+	isVideo = false;
     }
   }else{
     //Default
     capture.open(CV_CAP_ANY);
   }
-  
+
   if(!capture.isOpened()){
     std::cerr << "Failed to open video capture" << std::endl;
     return 1;
   }
-  
+
+
+  //Create Detector
   TargetDetector targetDetector;
-  
-  Target target = Target(Target::ThreeBlobs,8,8,false,180);
-  
-  //Run autoThreshold
-  if(!targetDetector.autoThreshold(capture,target,10,250))
-    targetDetector.setThreshold(125);
-    
-  
-  Timer FPStimer,execTimer;
-  char key;
   cv::Mat image;
-  
-  int nb = 0;
+
+  if(!isVideo)
+    capture >> image;
+
+  //Set target
+  Target target(Target::OneBlob,8,8,false,180);
+
+  //Read and set threshold
+  int threshold = 125;
+  if(argc>2){
+    if(std::string(argv[2])=="auto"){
+      if(isVideo)
+	targetDetector.autoThreshold(capture,target,10,250,true);
+      else{
+	targetDetector.autoThreshold(image,target,10,250,true);
+      }
+    }else{
+      if(isNumber(argv[2],threshold)){
+	targetDetector.setThreshold(threshold);	
+      }else{
+	std::cerr << "'" << argv[2] << "' is not a number in [0-255] or 'auto'" << std::endl;
+	help(argv[0]);
+	return 1;
+      }
+    }
+  }
+
+
+  Timer fpsTimer,execTimer;
+  char key = -1;
+
+  int nbIter = 0;
   double execTimeMean = 0;
   double FPSmean = 0;
-  
+
   do{
     //Grab image
-    capture >> image;
-    
+    if(isVideo)
+      capture >> image;
+
     //Check if the image is correct
     if(image.empty()){
       break;
     }
-    
+
     execTimer.restart();
-    
+
     //Detect targets
-    cv::Size size(4,5);
+    cv::Size targetSize(4,5);
     std::vector<cv::Point2f> centers;
-    bool found = targetDetector.findTargetsGrid(image,size,centers,target);
-    
+
+    //Using increasing target grid
+    bool found = targetDetector.findTargetsGrid(image,targetSize,centers,target);
+
+    //Using list of values
+    //static const int v[] = {6,12,10,24,30,20,18,48,54,60,40,46,36,34,96,102};
+    //std::vector<int> values (v, v + sizeof(v) / sizeof(v[0]) );
+    //bool found = targetDetector.findTargetsGrid(image,targetSize,centers,target,values);
+
     double execTime = execTimer.elapsed();
-    
-    //Draw targets
-    cv::drawChessboardCorners(image,size,centers,found);
+
+    //Draw grid
+    cv::drawChessboardCorners(image,targetSize,centers,found);
 
     //Compute and display FPS
-    double fps = 1.0/FPStimer.s_elapsed();
+    double fps = 1.0/fpsTimer.s_elapsed();
 
-    FPStimer.restart();
+    fpsTimer.restart();
     cv::putText(image,toStr(fps),cv::Point2f(5,25),cv::FONT_HERSHEY_SIMPLEX,1,CV_RGB(255,255,255),3);
     cv::putText(image,toStr(fps),cv::Point2f(5,25),cv::FONT_HERSHEY_SIMPLEX,1,CV_RGB(0,0,0),2);
     cv::putText(image,toStr(execTime),cv::Point2f(5,50),cv::FONT_HERSHEY_SIMPLEX,1,CV_RGB(255,255,255),3);
     cv::putText(image,toStr(execTime),cv::Point2f(5,50),cv::FONT_HERSHEY_SIMPLEX,1,CV_RGB(0,0,0),2);
     cv::putText(image,toStr(centers.size()),cv::Point2f(5,75),cv::FONT_HERSHEY_SIMPLEX,1,CV_RGB(255,255,255),3);
     cv::putText(image,toStr(centers.size()),cv::Point2f(5,75),cv::FONT_HERSHEY_SIMPLEX,1,CV_RGB(0,0,0),2);
-    
+
     //Display image
     cv::imshow("Detector",image);
     key = cv::waitKey(5);
-    
-    execTimeMean = (nb*execTimeMean + execTime)/(nb+1);
-    FPSmean = (nb*FPSmean + fps)/(nb+1);
-    
-    nb++;
-  }while(key<0);
-  
+
+    //Compute means
+    execTimeMean = (nbIter*execTimeMean + execTime)/(nbIter+1);
+    FPSmean = (nbIter*FPSmean + fps)/(nbIter+1);
+    nbIter++;
+
+  }while(key<0 && isVideo);
+
   std::cout << "Mean FPS: " << FPSmean << "Hz" << std::endl;
   std::cout << "Mean exec: " << execTimeMean << "ms" << std::endl;
-  
+
+  if(!isVideo)
+    cv::waitKey(0);
+
   return 0;
 }
 
+
+void help(std::string exec)
+{
+
+}
+
+std::string toStr(double d)
+{
+    std::stringstream ss;
+    ss << d;
+    return ss.str();
+}
+
+bool isNumber(const std::string &number, int &nb)
+{
+  std::stringstream ss(number);
+  ss >> nb;
+  if(ss.fail())
+    return false;
+  if(nb<0 || nb>255)
+    return false;
+  return true;
+}

@@ -12,20 +12,24 @@
 # received a copy of the GNU General Public License along with
 # software. If not, see <http://www.gnu.org/licenses/>.
 
-#Create detector
-ADD_EXECUTABLE(detect
-	detect.cpp
+#Create targets detector
+ADD_EXECUTABLE(targetdetector-targets
+	targetdetector-targets.cpp
 )
-TARGET_LINK_LIBRARIES( detect ${PROJECT_NAME})
+TARGET_LINK_LIBRARIES( targetdetector-targets ${PROJECT_NAME})
 
-ADD_EXECUTABLE(detectgrid
-	detectgrid.cpp
+#Create grid detector
+ADD_EXECUTABLE(targetdetector-grid
+	targetdetector-grid.cpp
 )
-TARGET_LINK_LIBRARIES( detectgrid ${PROJECT_NAME})
+TARGET_LINK_LIBRARIES( targetdetector-grid ${PROJECT_NAME})
 
 #Install binaries
 IF(INSTALL_BINARIES)
-INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/detect
-	DESTINATION ${CMAKE_INSTALL_PREFIX}/bin/
-        PERMISSIONS OWNER_READ GROUP_READ WORLD_READ OWNER_WRITE OWNER_EXECUTE)
+  INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/targetdetector-targets
+	  DESTINATION ${CMAKE_INSTALL_PREFIX}/bin/
+	  PERMISSIONS OWNER_READ GROUP_READ WORLD_READ OWNER_WRITE OWNER_EXECUTE)
+  INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/targetdetector-grid
+	  DESTINATION ${CMAKE_INSTALL_PREFIX}/bin/
+	  PERMISSIONS OWNER_READ GROUP_READ WORLD_READ OWNER_WRITE OWNER_EXECUTE)
 ENDIF(INSTALL_BINARIES)
