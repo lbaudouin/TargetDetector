@@ -52,6 +52,7 @@ int main(int argc, char* argv[])
 
   if(!capture.isOpened()){
     std::cerr << "Failed to open video capture" << std::endl;
+    help(argv[0]);
     return 1;
   }
 
@@ -67,13 +68,12 @@ int main(int argc, char* argv[])
   std::vector<Target> searches;
   searches.push_back( Target(Target::OneBlob,8,8,false,180) );
   searches.push_back( Target(Target::ThreeBlobs,8,8,false,180) );
-  searches.push_back( Target(Target::ThreeBlobs,8,8,false,220) );
   searches.push_back( Target(Target::TwoRings,8,8,false,180) );
 
   //Read and set threshold
   int threshold = 125;
   if(argc>2){
-    if(std::string(argv[2])=="auto"){
+    if(std::string(argv[2])=="auto" || std::string(argv[2])=="Auto"){
       if(isVideo)
 	targetDetector.autoThreshold(capture,searches[0],10,250,true);
       else{
@@ -132,17 +132,18 @@ int main(int argc, char* argv[])
     //Display image
     cv::imshow("Detector",image);
     key = cv::waitKey(5);
+    
+    if(key=='p'){
+      key = cv::waitKey(0);
+      if(key!='q')
+	key = -1;
+    }
 
     //Compute means
     execTimeMean = (nbIter*execTimeMean + execTime)/(nbIter+1);
     FPSmean = (nbIter*FPSmean + fps)/(nbIter+1);
     nbIter++;
 
-#ifdef DEBUG_MODE
-    //Pause if more than 2
-    if(targets.size()>2)
-      cv::waitKey(0);
-#endif
   }while(key<0 && isVideo);
 
   std::cout << "Mean FPS: " << FPSmean << "Hz" << std::endl;
@@ -157,7 +158,9 @@ int main(int argc, char* argv[])
 
 void help(std::string exec)
 {
-
+  std::cout << "Usage:\n\t" << exec << " [source] [threshold]" << std::endl;
+  std::cout << "Source:\n\tCamera index (default is 0)\n\tVideo file\n\tImage file" << std::endl;
+  std::cout << "Threshold:\n\tBinary threshold in [0:255] (default is 125)\n\tAuto" << std::endl;
 }
 
 std::string toStr(double d)

@@ -69,7 +69,7 @@ int main(int argc, char* argv[])
   //Read and set threshold
   int threshold = 125;
   if(argc>2){
-    if(std::string(argv[2])=="auto"){
+    if(std::string(argv[2])=="auto" || std::string(argv[2])=="Auto"){
       if(isVideo)
 	targetDetector.autoThreshold(capture,target,10,250,true);
       else{
@@ -154,10 +154,11 @@ int main(int argc, char* argv[])
   return 0;
 }
 
-
 void help(std::string exec)
 {
-
+  std::cout << "Usage:\n\t" << exec << " [source] [threshold]" << std::endl;
+  std::cout << "Source:\n\tCamera index (default is 0)\n\tVideo file\n\tImage file" << std::endl;
+  std::cout << "Threshold:\n\tBinary threshold in [0:255] (default is 125)\n\tAuto" << std::endl;
 }
 
 std::string toStr(double d)
