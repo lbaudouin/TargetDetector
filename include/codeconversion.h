@@ -50,6 +50,11 @@ namespace {
       val /= 2;
     }
     std::string str = ss.str();
+    if(str.size()<nbBits){
+      for(unsigned int i=str.size(); i<nbBits; i++)
+	ss << "0";
+      str = ss.str();
+    }
     std::reverse(str.begin(), str.end());
     return str;
   }
