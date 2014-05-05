@@ -31,7 +31,7 @@ int main(int argc, char* argv[])
   cv::drawChessboardCorners(I1,size5x5,centers,okOrdered);
   cv::imwrite("OrderedGrid.png",I1);
   
-#ifdef TARGET_DEBUG
+#ifdef DEBUG_MODE
   cv::imshow("Result",I1);
   cv::waitKey(0);
 #endif
@@ -47,7 +47,7 @@ int main(int argc, char* argv[])
   cv::drawChessboardCorners(I2,size4x4,centers,okUnordered);
   cv::imwrite("UnorderedGrid.png",I2);
   
-#ifdef TARGET_DEBUG
+#ifdef DEBUG_MODE
   cv::imshow("Result",I2);
   cv::waitKey(0);
 #endif

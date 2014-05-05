@@ -77,7 +77,7 @@ int main(int argc, char* argv[])
       if(isVideo)
 	targetDetector.autoThreshold(capture,searches[0],10,250,true);
       else{
-	targetDetector.autoThreshold(image,searches[0],10,250,true);
+	targetDetector.autoThreshold(image,searches[0],10);
       }
     }else{
       if(isNumber(argv[2],threshold)){
@@ -138,7 +138,7 @@ int main(int argc, char* argv[])
     FPSmean = (nbIter*FPSmean + fps)/(nbIter+1);
     nbIter++;
 
-#ifdef TARGET_DEBUG
+#ifdef DEBUG_MODE
     //Pause if more than 2
     if(targets.size()>2)
       cv::waitKey(0);

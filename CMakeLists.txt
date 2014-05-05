@@ -36,7 +36,7 @@ OPTION(BUILD_SHARED_LIBS "Build the shared library" TRUE)
 OPTION(BUILD_TEST "Build test" FALSE)
 OPTION(INSTALL_DOC "Install documentation" TRUE)
 OPTION(INSTALL_BINARIES "Install binaries" FALSE)
-OPTION(TARGET_DEBUG "Enable target debug" FALSE)
+OPTION(DEBUG_MODE "Enable debug mode" FALSE)
 
 #Find packages
 FIND_PACKAGE(OpenCV 2.3 REQUIRED)
@@ -48,9 +48,9 @@ include_directories( ${CMAKE_SOURCE_DIR}/include/ )
 SET(${PROJECT_NAME}_CXXFLAGS "")
 SET(${PROJECT_NAME}_LIBS "")
 
-IF(TARGET_DEBUG)
-  add_definitions( "-DTARGET_DEBUG" )
-ENDIF(TARGET_DEBUG)
+IF(DEBUG_MODE)
+  add_definitions( "-DDEBUG_MODE" )
+ENDIF(DEBUG_MODE)
 
 #Set sources files
 file(GLOB ${PROJECT_NAME}_SRCS src/*.cpp)

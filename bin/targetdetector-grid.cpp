@@ -73,7 +73,7 @@ int main(int argc, char* argv[])
       if(isVideo)
 	targetDetector.autoThreshold(capture,target,10,250,true);
       else{
-	targetDetector.autoThreshold(image,target,10,250,true);
+	targetDetector.autoThreshold(image,target,10);
       }
     }else{
       if(isNumber(argv[2],threshold)){
