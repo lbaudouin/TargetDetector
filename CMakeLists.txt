@@ -19,7 +19,7 @@ SET(PROJECT_NAME target)
 SET(PROJECT_DESCRIPTION "Detect targets in images")
 SET(PROJECT_URL "")
 SET(PROJECT_VERSION "0.0.1")
-SET(PROJECT_REQUIREMENTS "opencv")
+SET(PROJECT_REQUIREMENTS "opencv >= 2.3")
 
 #Set default build type
 IF (NOT CMAKE_BUILD_TYPE)
@@ -39,7 +39,7 @@ OPTION(INSTALL_BINARIES "Install binaries" FALSE)
 OPTION(TARGET_DEBUG "Enable target debug" FALSE)
 
 #Find packages
-FIND_PACKAGE(OpenCV REQUIRED)
+FIND_PACKAGE(OpenCV 2.3 REQUIRED)
 
 #Include directories
 include_directories( ${CMAKE_SOURCE_DIR}/include/ )

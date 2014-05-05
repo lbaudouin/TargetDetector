@@ -13,14 +13,14 @@
 # library. If not, see <http://www.gnu.org/licenses/>.
 
 
-Project Target
+*** Build target library ***
 
 Create build directory:
 $ mkdir build
 $ cd build
 
 Build project:
-$ cmake .. 
+$ cmake ..
 $ make -j 3
 
 To debug the process, use debug version
@@ -37,6 +37,15 @@ $ make doc
 $ firefox ./doc/html/index.html &
 
 Create tests:
-$ cmake -DBUILD_TEST=ON .. 
+$ cmake -DBUILD_TEST=ON ..
 $ make
 $ make test
+
+
+*** Use target library ***
+
+Build and install target library.
+In your project CMakeLists.txt add the following line with arguments you need:
+FIND_PACKAGE(target [<version>] [EXACT] [REQUIRED])
+(See CMake documentation for FIND_PACKAGE information)
+
