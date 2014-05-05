@@ -7,17 +7,41 @@
 //
 // This library is distributed in the hope that it will be useful, but
 // WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
 // General Public License for more details. You should have
 // received a copy of the GNU General Public License along with
 // this library. If not, see <http://www.gnu.org/licenses/>.
 
 #include "../include/targetdetector.h"
 
+///////////////////////////////////// DEBUG FUNCTIONS ///////////////////////////////////////////
+
+#ifdef DEBUG_MODE
+#include "ostream"
+std::vector<cv::Point2f> pts_images_check;
+std::vector<int> pts_images_val;
+
+std::ostream& operator<<(std::ostream& os, const std::vector<int>& v)
+{
+  for(unsigned int i=0; i<v.size(); i++){
+    if(i%16==0 && i!=0)
+      os << "-";
+    os << v[i];
+  }
+  return os;
+}
+
+bool isEllipse(const Blob &blob, const double &threshold);
+void drawBlobRecursively(cv::Mat &image, const Blob &blob, int depth = 0);
+void drawEllipseRecursively(cv::Mat &image, const Blob &blob, int depth = 0);
+#endif
+
+//////////////////////////////////////////////////////////////////////////////////
+
 /** Create TargetDetector object
  * @param threshold define the binary threshold of gray scale image
  */
-TargetDetector::TargetDetector(int threshold) : m_binaryThreshold(threshold), m_ellipseThreshold(0.95)
+TargetDetector::TargetDetector(int threshold) : m_binaryThreshold(threshold), m_ellipseThreshold(0.90)
 {
 
 }
@@ -93,8 +117,9 @@ bool TargetDetector::autoThreshold(const cv::Mat &image, Target search, const in
  * @param searches define types of target to search
  * @param step step between two threshold tests
  * @param nbIterationMax number of iteration before leaving the auto-thresholding function
+ * @param display display video during autoThreshold process
  */
-bool TargetDetector::autoThreshold(cv::VideoCapture &capture, const std::vector<Target> &searches, const int &step, const int &nbIterationMax, const bool display)
+bool TargetDetector::autoThreshold(cv::VideoCapture &capture, const std::vector<Target> &searches, const int &step, const int &nbIterationMax, const bool &display)
 {
   for(int i=0;i<nbIterationMax;i++){
 
@@ -131,8 +156,9 @@ bool TargetDetector::autoThreshold(cv::VideoCapture &capture, const std::vector<
  * @param search define the type of target to search
  * @param step step between two threshold tests
  * @param nbIterationMax number of iteration before leaving the auto-thresholding function
+ * @param display display video during autoThreshold process
  */
-bool TargetDetector::autoThreshold(cv::VideoCapture &capture, Target search, const int &step, const int &nbIterationMax, const bool display)
+bool TargetDetector::autoThreshold(cv::VideoCapture &capture, Target search, const int &step, const int &nbIterationMax, const bool &display)
 {
   std::vector<Target> searches;
   searches.push_back(search);
@@ -195,42 +221,34 @@ std::vector<Target> TargetDetector::track(const cv::Mat &image, const std::vecto
   //Extract blobs
   std::vector<Blob> blobs = findBlobs(imageGray);
 
-#ifdef TARGET_DEBUG
+#ifdef DEBUG_MODE
   cv::Mat color = image.clone();
-  for(unsigned int i=0;i<blobs.size();i++){
-    std::vector< std::vector<cv::Point> > contours;
-    contours.push_back( blobs[i].contours );
-    if(isEllipse(blobs[i]))
-      cv::drawContours(color,contours,0,CV_RGB(255,0,0),2);
-    else
-      cv::drawContours(color,contours,0,CV_RGB(255,255,255),2);
-    for(unsigned int j=0;j<blobs[i].children.size();j++){
-      contours.clear();
-      contours.push_back( blobs[i].children[j].contours );
-      if(isEllipse(blobs[i].children[j],0.9))
-	cv::drawContours(color,contours,0,CV_RGB(0,255,0),2);
-      else
-	cv::drawContours(color,contours,0,CV_RGB(255,255,0),2);
-      for(unsigned int k=0;k<blobs[i].children[j].children.size();k++){
-	contours.clear();
-	contours.push_back( blobs[i].children[j].children[k].contours );
-	if(isEllipse(blobs[i].children[j].children[k],0.85))
-	  cv::drawContours(color,contours,0,CV_RGB(0,0,255),2);
-	else
-	  cv::drawContours(color,contours,0,CV_RGB(0,255,255),2);
-      }
-    }
-  }
-  cv::imshow("color",color);
+  for(unsigned int i=0;i<blobs.size();i++)
+    drawBlobRecursively(color,blobs[i]);
+  cv::imshow("Blobs",color);
+  pts_images_check.clear();
+  pts_images_val.clear();
 #endif
 
-  //Call different method according to the type
+  //Call different method according to the type of target
   std::vector<Target> targets;
   for(unsigned int i=0;i<searches.size();i++){
     std::vector<Target> targetsTemp = checkBlobs(blobs,imageGray,searches[i]);
     if(targetsTemp.size()>0)
       targets.insert(targets.end(), targetsTemp.begin(), targetsTemp.end());
   }
+
+#ifdef DEBUG_MODE
+  cv::Mat ptsI = image.clone();
+  for(unsigned int i=0;i<pts_images_check.size();i++){
+    switch(pts_images_val[i]){
+      case -1: cv::circle(ptsI,pts_images_check[i],1,CV_RGB(0,0,255),-1); break;
+      case 0: cv::circle(ptsI,pts_images_check[i],1,CV_RGB(255,0,0),-1); break;
+      case 1: cv::circle(ptsI,pts_images_check[i],1,CV_RGB(0,255,0),-1); break;
+    }
+  }
+  cv::imshow("Pts",ptsI);
+#endif
 
   return targets;
 }
@@ -257,7 +275,7 @@ std::vector<Blob> TargetDetector::findBlobs(const cv::Mat &frameGray, const int 
   cv::threshold(frameGray, segmented, m_binaryThreshold, 255, CV_THRESH_BINARY_INV);
   //cv::Mat segmented = thresholdType==CV_THRESH_BINARY ? (frameGray > m_threshold) : (frameGray < m_threshold);
 
-#ifdef TARGET_DEBUG
+#ifdef DEBUG_MODE
   cv::imshow("Binary",segmented);
   cv::Mat segmentedClone = segmented.clone();
 #endif
@@ -267,16 +285,17 @@ std::vector<Blob> TargetDetector::findBlobs(const cv::Mat &frameGray, const int 
 
   cv::findContours(segmented, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE);
 
-#ifdef TARGET_DEBUG
+#ifdef DEBUG_MODE
   cv::Mat contoursImage;
   cv::cvtColor(segmentedClone,contoursImage,CV_GRAY2BGR);
-  
-  int idx = 0;
-  for( ; idx>=0; idx=hierarchy[idx][0]){
-      cv::Scalar color( rand()&255, rand()&255, rand()&255 );
-      cv::drawContours( contoursImage, contours, idx, color, CV_FILLED, 8, hierarchy );
-  }
 
+  if(hierarchy.size()>0){
+    int idx = 0;
+    for( ; idx>=0; idx=hierarchy[idx][0]){
+	cv::Scalar color( rand()&255, rand()&255, rand()&255 );
+	cv::drawContours( contoursImage, contours, idx, color, CV_FILLED, 8, hierarchy );
+    }
+  }
   cv::imshow("Contours",contoursImage);
 #endif
 
@@ -293,11 +312,11 @@ std::vector<Blob> TargetDetector::findBlobs(const cv::Mat &frameGray, const int 
       blobs.push_back(blob);
     index = hierarchy[index][0];
   }
-  
-#ifdef TARGET_DEBUG
+
+#ifdef DEBUG_MODE
   cv::Mat ellipseImage;
   cv::cvtColor(segmentedClone,ellipseImage,CV_GRAY2BGR);
-  
+
   for(unsigned int i=0;i<blobs.size();i++){
     if(blobs[i].isValid)
       cv::ellipse(ellipseImage, cv::RotatedRect(blobs[i].center,cv::Size(blobs[i].minorAxis*2.0,blobs[i].majorAxis*2.0),blobs[i].orientation), CV_RGB(255,0,0), 2 );
@@ -310,10 +329,10 @@ std::vector<Blob> TargetDetector::findBlobs(const cv::Mat &frameGray, const int 
       }
     }
   }
-  
+
   cv::imshow("Ellipse",ellipseImage);
 #endif
-  
+
   return blobs;
 }
 
@@ -361,23 +380,23 @@ Blob TargetDetector::createBlob(const std::vector<cv::Point> &external, bool &ok
   blob.area = cv::contourArea( external );
   blob.realArea = blob.area;
 
-  if(blob.area<5){
+  if(blob.area<25){
     ok = false;
     return blob;
   }
-  
+
   std::vector<cv::Point> hull;
   cv::convexHull(external,hull);
-  
+
   if( hull.size() > 5 ){
     cv::RotatedRect ellipse = cv::fitEllipse( hull );
-    
+
     if(ellipse.size.width<=0 || ellipse.size.height<=0){
       ok = false;
       std::cerr << "Bad ellipse" << std::endl;
       return blob;
-    }      
-    
+    }
+
     blob.center = ellipse.center;
     blob.orientation = ellipse.angle;
     blob.majorAxis =  std::max(ellipse.size.width,ellipse.size.height) / 2.0;
@@ -392,7 +411,7 @@ Blob TargetDetector::createBlob(const std::vector<cv::Point> &external, bool &ok
 
     blob.isValid = true;
   }
-  
+
   ok = true;
   return blob;
 }
@@ -415,6 +434,11 @@ bool TargetDetector::isEllipse(const Blob &blob, const double &threshold) const
  **/
 bool TargetDetector::isEllipseWithoutHole(const Blob &blob, const double &threshold) const
 {
+  //If blob is too small
+  if(blob.realArea<25){
+    return fabs(blob.majorAxis-blob.minorAxis) < 3;
+  }
+
   if(threshold<=0)
     return (blob.realArea > m_ellipseThreshold*blob.majorAxis*blob.minorAxis*M_PI);
   else
@@ -474,7 +498,7 @@ std::vector<Target> TargetDetector::checkBlobs(const std::vector<Blob> &blobs, c
       }
       break;
   }
-  
+
   return targets;
 }
 
@@ -505,14 +529,13 @@ std::vector<Target> TargetDetector::checkOneBlob(const Blob &blob, const cv::Mat
     }
   }
 
-  if(blob.children.size()>0){
-    for(unsigned int i=0;i<blob.children.size();i++){
-      std::vector<Target> tmp = checkOneBlob(blob.children[i],frameGray,search);
-      if(tmp.size()>0){
-	targets.insert(targets.end(),tmp.begin(),tmp.end());
-      }
+  for(unsigned int i=0;i<blob.children.size();i++){
+    std::vector<Target> tmp = checkOneBlob(blob.children[i],frameGray,search);
+    if(tmp.size()>0){
+      targets.insert(targets.end(),tmp.begin(),tmp.end());
     }
   }
+
   return targets;
 }
 
@@ -524,19 +547,21 @@ std::vector<Target> TargetDetector::checkOneBlob(const Blob &blob, const cv::Mat
 std::vector<Target> TargetDetector::checkThreeBlobs(const Blob &blob, const cv::Mat &frameGray, const Target &search) const
 {
   std::vector<Target> targets;
-    
+
   if(blob.isValid){
-    if(isEllipse(blob,0.95)){
+    if(isEllipse(blob,0.8)){
       //Find internal circle
       for(unsigned int i=0;i<blob.children.size();i++){
 	if(blob.children[i].index==blob.index || !blob.children[i].isValid)
 	  continue;
-	if(isConcentricEllispe(blob, blob.children[i], blob.minorAxis/10.0, 1.5/3.0, 2.5/3.0)){
+
+	//if(isConcentricEllispe(blob, blob.children[i], blob.minorAxis/10.0, 1.5/3.0, 2.5/3.0)){
+	if(isConcentricEllispe(blob, blob.children[i], blob.minorAxis/10.0, 1.0/3.0, 3.0/3.0)){
 	  //Find central blob
 	  for(unsigned int j=0;j<blob.children[i].children.size();j++){
 	    if(blob.children[i].children[j].index==blob.children[i].index || blob.children[i].children[j].index==blob.index || !blob.children[i].children[j].isValid)
 	      continue;
-	
+
 	    if(isEllipseWithoutHole(blob.children[i].children[j],0.8) && isConcentricEllispe(blob, blob.children[i].children[j], blob.minorAxis/10.0, 0.5/3.0, 1.5/3.0)){
 	      //Create target and set center
 	      Target target = search;
@@ -547,10 +572,6 @@ std::vector<Target> TargetDetector::checkThreeBlobs(const Blob &blob, const cv::
 	      if(target.readCode()){
 		if(extractCode(blob, frameGray, target)){
 		  targets.push_back(target);
-		}else{
-#ifdef TARGET_DEBUG
-		  std::cerr << "checkThreeBlobs: extractCode failed" << std::endl;
-#endif
 		}
 	      }else{
 		targets.push_back(target);
@@ -661,7 +682,7 @@ bool TargetDetector::extractCodeFromImage(const cv::Mat &frameGray, cv::Point2d 
   int min = 255;
   int max = 0;
 
-  std::vector<double> codeDouble;
+  std::vector<int> codeInt;
   codePoints.clear();
 
   //Check if ellipse point is in the image and then read code
@@ -682,23 +703,45 @@ bool TargetDetector::extractCodeFromImage(const cv::Mat &frameGray, cv::Point2d 
       max = std::max(max,val);
       min = std::min(min,val);
 
-      codeDouble.push_back(val);
+      codeInt.push_back(val);
       codePoints.push_back(cv::Point2f(xellipse,yellipse));
+
+#ifdef DEBUG_MODE
+      pts_images_check.push_back(cv::Point2f(xellipse,yellipse));
+#endif
 
     }else{
       //Code outside of image
+#ifdef DEBUG_MODE
+      for(unsigned int i=0;i<codeInt.size();i++){
+	pts_images_val.push_back(-1);
+      }
+#endif
       return false;
     }
     t -= angle;
   }
 
-  codeValues.resize(codeDouble.size());
+  //If not enough value range
+  if(max-min<50){
+#ifdef DEBUG_MODE
+    for(unsigned int i=0;i<codeInt.size();i++){
+      pts_images_val.push_back(-1);
+    }
+#endif
+    return false;
+  }
+
+  codeValues.resize(codeInt.size());
 
   //Normalize values
   double threshold = 0.5;
-  for(unsigned int i=0;i<codeDouble.size();i++){
-    double val = ((codeDouble[i] - min)/(max - min));
+  for(unsigned int i=0;i<codeInt.size();i++){
+    double val = (((double)codeInt[i] - min)/(max - min));
     codeValues[i] = (val<threshold?1:0);
+#ifdef DEBUG_MODE
+    pts_images_val.push_back(codeValues[i]);
+#endif
   }
 
   return true;
@@ -732,35 +775,61 @@ bool TargetDetector::extractCode(const Blob &blob, const cv::Mat &frameGray, Tar
   int nbPointPerBit = target.numberPointPerBit();
   double codeAngle = 360.0/(target.nbBits()*nbPointPerBit);
 
+  std::string header = target.headerString();
+  std::vector<int> originalHeaderCode;
+  for(unsigned int i=0;i<header.size();i++){
+    for(int j=0;j<nbPointPerBit;j++){
+      originalHeaderCode.push_back(header[i]=='0'?0:1);
+    }
+  }
+
   //Extract code from image
   if(target.type()==Target::OneBlob || target.type()==Target::ThreeBlobs){
     std::vector<int> code;
     std::vector<cv::Point2f> points;
 
-    if(!extractCodeFromImage(frameGray, center, a*target.radiusFactor(), b*target.radiusFactor(), orientation, codeAngle, code, points)){
-      return false;
-    }
+    std::vector<double> scales;
+    scales.push_back(1.0);
+    scales.push_back(0.95);
+    scales.push_back(1.05);
+    scales.push_back(0.9);
+    scales.push_back(1.1);
 
-    //Filter the code
-    filterCode(code);
-    alignPointsOnBit(code,points);
 
-    //String code from value
-    std::string codeString = code2string(code,nbPointPerBit);
+    for(unsigned int s=0;s<scales.size();s++){
+      if(!extractCodeFromImage(frameGray, center, scales[s]*a*target.radiusFactor(), scales[s]*b*target.radiusFactor(), orientation, codeAngle, code, points)){
+	continue;
+      }
 
-    //Save points value
-    std::vector<int> pointsValue;
-    for(unsigned int i=0;i<points.size();i++){
-      if( codeString[ (i/target.numberPointPerBit())%codeString.length() ]=='0' )
-	pointsValue.push_back(0);
+      if(!alignPointsOnFirstBit(originalHeaderCode,code,points,0.75))
+	continue;
+	
+      //Filter the code
+      //filterCode(code);
+
+      //String code from value
+      std::string codeString = code2string(code,nbPointPerBit);
+
+      //Save points value
+      std::vector<int> pointsValue;
+      for(unsigned int i=0;i<points.size();i++){
+	if( codeString[ (i/target.numberPointPerBit())%codeString.length() ]=='0' )
+	  pointsValue.push_back(0);
+	else
+	  pointsValue.push_back(1);
+      }
+      target.setPoints( points, pointsValue );
+      target.setEllipseParameters(a,b,orientation);
+
+      if(readCode(target,codeString))
+	return true;
       else
-	pointsValue.push_back(1);
+	continue;
     }
-    target.setPoints( points, pointsValue );
-    target.setEllipseParameters(a,b,orientation);
 
-    return readCode(target,codeString);
+    return false;
   }
+
   if(target.type()==Target::TwoRings){
     std::vector<int> codeHeader, codeMessage;
     std::vector<cv::Point2f> pointsHeader, pointsMessage;
@@ -771,42 +840,27 @@ bool TargetDetector::extractCode(const Blob &blob, const cv::Mat &frameGray, Tar
       return false;
 
     //Filter the code
-    filterCode(codeHeader);
+    //filterCode(codeHeader);
 
-    //Shift using angle not number of points
-    double rotAlign = alignPointsOnBit(codeHeader,pointsHeader,angleHeader);
+    int shift = 0;
+    if(!alignPointsOnFirstBit(originalHeaderCode,codeHeader,pointsHeader,0.75,&shift))
+	return false;
+
+    //Compute rotation of header
+    double rotationHeader = angleHeader * shift;
+
     std::string headerString = code2string(codeHeader,nbPointPerBit);
+    int headerPosition = findHeader(headerString,target.headerString());
 
-    int headerPos = findHeader(headerString,target.headerString());
-
-    if(headerPos<0){
+    if(headerPosition<0){
       return false;
     }
 
-    std::vector<int> codeHeaderTemp;
-    std::vector<cv::Point2f> pointsHeaderTemp;
-    for(unsigned int i=headerPos*nbPointPerBit;i<codeHeader.size();i++){
-      codeHeaderTemp.push_back(codeHeader[i]);
-      pointsHeaderTemp.push_back(pointsHeader[i]);
-    }
-    for(int i=0;i<headerPos*nbPointPerBit;i++){
-      codeHeaderTemp.push_back(codeHeader[i]);
-      pointsHeaderTemp.push_back(pointsHeader[i]);
-    }
-    codeHeader = codeHeaderTemp;
-    pointsHeader = pointsHeaderTemp;
-
-    std::string str;
-    for(unsigned int i=0;i<headerString.size();i++){
-      int index = (i+headerPos+headerString.size())%headerString.size();
-      str.push_back( headerString[index] );
-    }
-    headerString = str;
-
     int nbMessageBits = target.messageBits() + (target.useParityBit()?1:0);
     double angleMessage = 360.0/(nbMessageBits*nbPointPerBit);
-    double shift = - (rotAlign + headerPos*angleHeader*nbPointPerBit);
-    if(!extractCodeFromImage(frameGray, center, a*target.radiusFactor2(), b*target.radiusFactor2(), orientation, angleMessage, codeMessage, pointsMessage, shift))
+    double rotationMessage = - (rotationHeader + headerPosition*angleHeader*nbPointPerBit);
+
+    if(!extractCodeFromImage(frameGray, center, a*target.radiusFactor2(), b*target.radiusFactor2(), orientation, angleMessage, codeMessage, pointsMessage, rotationMessage))
       return false;
 
     //Filter the code
@@ -905,48 +959,58 @@ void TargetDetector::filterCode(std::vector<int> &code) const
 }
 
 /** Align the code on the first point in the sequence
+ * @param header is input header (code form)
  * @param code is input/ouput code value vector
  * @param points is input/output code point vector
- * @return Number of points shifted
+ * @param minScore is the threshold to decide if the header match on code
+ * @param shift is optional output represent the code shift to match the header
+ * @return Return true if the header match on code
  **/
-int TargetDetector::alignPointsOnBit(std::vector<int> &code, std::vector<cv::Point2f> &points) const
+bool TargetDetector::alignPointsOnFirstBit(const std::vector<int> &header, std::vector<int> &code, std::vector<cv::Point2f> &points, const double &minScore, int *shift) const
 {
-  int firstVal = code[0];
+  std::vector<int> codeDoubleLength = code;
+  codeDoubleLength.insert(codeDoubleLength.end(),code.begin(),code.end());
 
-  //Copy the first numbers at the end until value change
-  int shift=0;
-  while(code[shift]==firstVal)
-    shift++;
-
-  //Shift the code
-  std::vector<int> codeCopy(code.size());
-  for(unsigned int i=0;i<codeCopy.size();i++){
-    int index = (i-shift+code.size())%code.size();
-    codeCopy[index] = code[i];
+  int bestPos = 0;
+  double bestRatio = 0;
+  int length = header.size();
+  for(unsigned int i=0;i<code.size();i++){
+    int nb = 0;
+    for(unsigned int j=0;j<header.size();j++){
+      if(codeDoubleLength[i+j]==header[j]){
+	nb++;
+      }
+    }
+    double ratio = (double)nb/(double)length;
+    if(ratio>bestRatio){
+      bestRatio = ratio;
+      bestPos = i;
+    }
   }
+
+  if(bestRatio<minScore){
+    if(shift)
+      (*shift) = 0;
+    return false;
+  }
+
+  std::vector<int> codeCopy;
+  for(unsigned int i=bestPos;i<code.size();i++)
+    codeCopy.push_back(code[i]);
+  for(int i=0;i<bestPos;i++)
+    codeCopy.push_back(code[i]);
   code = codeCopy;
 
-  //Shift points
   std::vector<cv::Point2f> pointsCopy;
-  for(unsigned int i=shift;i<points.size();i++)
+  for(unsigned int i=bestPos;i<points.size();i++)
     pointsCopy.push_back(points[i]);
-  for(int i=0;i<shift;i++)
+  for(int i=0;i<bestPos;i++)
     pointsCopy.push_back(points[i]);
   points = pointsCopy;
 
-  return shift;
-}
-
-/** Align the code on the first point in the sequence
- * @param code is input/ouput code value vector
- * @param points is input/output code point vector
- * @param angle is angle between two points
- * @return Angle shifted
- **/
-double TargetDetector::alignPointsOnBit(std::vector<int> &code, std::vector<cv::Point2f> &points, const double &angle) const
-{
-  int shift = alignPointsOnBit(code,points);
-  return angle*shift;
+    if(shift)
+      (*shift) = bestPos;
+  return true;
 }
 
 /** Find the header bit sequence in the scanned code
@@ -975,48 +1039,50 @@ bool TargetDetector::readCode(Target &target, const std::string &codeString) con
   //Search the header
   std::string header = target.headerString();
   int found = findHeader(codeString,header);
-  std::string str = codeString + codeString;
-
-  std::string message;
-
-  if(found>=0){
-    message = str.substr(found+header.size(),target.nbBits()-header.size());
-
-    //Check parity bit
-    if(target.useParityBit()){
-      int parityBit = message[message.size()-1]=='1'?1:0;
-      message = message.substr(0,message.length()-1);
-
-      if(target.inverseParityBit())
-	parityBit = !parityBit;
-
-      std::stringstream ss;
-      ss << header << message;
-      int codeParity = parity(ss.str());
-
-      if(parityBit!=codeParity){
-	//Wrong parity bits
-#ifdef TARGET_DEBUG
-	std::cerr << "Wrong parity bit" << std::endl;
+  if(found<0){
+#ifdef DEBUG_MODE
+    //std::cerr << "codeString: " << codeString << "   looking for: " << header << std::endl;
 #endif
-	return false;
-      }
-    }
-
-    target.setMessage(message,target.useGrayCode());
-    target.setFirstHeaderIndex(found*target.numberPointPerBit());
-
-    return true;
-  }else{
     return false;
   }
+
+  std::string str = codeString + codeString;
+  std::string message;
+
+  message = str.substr(found+header.size(),target.nbBits()-header.size());
+
+  //Check parity bit
+  if(target.useParityBit()){
+    int parityBit = message[message.size()-1]=='1'?1:0;
+    message = message.substr(0,message.length()-1);
+
+    if(target.inverseParityBit())
+      parityBit = !parityBit;
+
+    std::stringstream ss;
+    ss << header << message;
+    int codeParity = parity(ss.str());
+
+    if(parityBit!=codeParity){
+      //Wrong parity bits
+#ifdef DEBUG_MODE
+      std::cerr << "Wrong parity bit" << std::endl;
+#endif
+      return false;
+    }
+  }
+
+  target.setMessage(message,target.useGrayCode());
+  target.setFirstHeaderIndex(found*target.numberPointPerBit());
+
+  return true;
 }
 
 /** Draw target on image
  * @param image input/output image
- * @param target target to tdraw
+ * @param target target to draw
  **/
-void TargetDetector::drawTarget(cv::Mat &image, const Target &target) const
+void TargetDetector::drawTarget(cv::Mat &image, const Target &target)
 {
   std::vector<Target> targets;
   targets.push_back(target);
@@ -1027,7 +1093,7 @@ void TargetDetector::drawTarget(cv::Mat &image, const Target &target) const
  * @param image input/output image
  * @param targets list of targets to tdraw
  **/
-void TargetDetector::drawTargets(cv::Mat &image, const std::vector<Target> &targets) const
+void TargetDetector::drawTargets(cv::Mat &image, const std::vector<Target> &targets)
 {
   for(unsigned int i=0;i<targets.size();i++){
     //Ellipse center
@@ -1089,7 +1155,7 @@ void TargetDetector::drawTargets(cv::Mat &image, const std::vector<Target> &targ
  * @param image is input/output image
  * @param p1,p2 are 2D points
  **/
-void TargetDetector::drawLineBetweenPoints(cv::Mat &image, const cv::Point2f &p1, const cv::Point2f &p2) const
+void TargetDetector::drawLineBetweenPoints(cv::Mat &image, const cv::Point2f &p1, const cv::Point2f &p2)
 {
   cv::Point2f n = p2-p1;
   std::swap(n.x,n.y);
@@ -1097,3 +1163,118 @@ void TargetDetector::drawLineBetweenPoints(cv::Mat &image, const cv::Point2f &p1
   cv::Point2f p = 0.5 * (p1+p2);
   cv::line(image,p+n,p-n,CV_RGB(255,0,0),2);
 }
+
+/** Draw grid points on image
+ * @param image is input/output image
+ * @param size is size of the grid
+ * @param centers are input centers
+ * @param found set to true if grid was found
+ */
+void TargetDetector::drawTargetGrid(const cv::Mat &image, const cv::Size &size, const std::vector< cv::Point2f > &centers, const bool &found)
+{
+  cv::drawChessboardCorners(image,size,centers,found);
+}
+
+
+
+
+///////////////////////////////////// DEBUG FUNCTIONS ///////////////////////////////////////////
+
+
+
+#ifdef DEBUG_MODE
+bool isEllipse(const Blob &blob, const double &threshold)
+{
+  return (blob.area > threshold*blob.majorAxis*blob.minorAxis*M_PI);
+}
+
+void drawBlobRecursively(cv::Mat &image, const Blob &blob, int depth)
+{
+  cv::Scalar color1,color2;
+
+  switch(depth%6){
+    case 0:
+      color1 = CV_RGB(255,0,0);
+      color2 = CV_RGB(125,0,0);
+      break;
+    case 1:
+      color1 = CV_RGB(0,255,0);
+      color2 = CV_RGB(0,125,0);
+      break;
+    case 2:
+      color1 = CV_RGB(0,0,255);
+      color2 = CV_RGB(0,0,125);
+      break;
+    case 3:
+      color1 = CV_RGB(255,255,0);
+      color2 = CV_RGB(125,125,0);
+      break;
+    case 4:
+      color1 = CV_RGB(0,255,255);
+      color2 = CV_RGB(0,125,125);
+      break;
+    case 5:
+      color1 = CV_RGB(255,0,255);
+      color2 = CV_RGB(125,0,125);
+      break;
+    default:
+      color1 = CV_RGB(255,255,255);
+      color2 = CV_RGB(125,125,125);
+  }
+
+
+  std::vector< std::vector<cv::Point> > contours;
+  contours.push_back( blob.contours );
+
+  if(blob.isValid){
+    if(isEllipse(blob,0.90))
+      cv::drawContours(image,contours,0,color1,2);
+    else
+      cv::drawContours(image,contours,0,color2,2);
+  }else{
+    if(isEllipse(blob,0.90))
+      cv::drawContours(image,contours,0,color1,-1);
+    else
+      cv::drawContours(image,contours,0,color2,-1);
+  }
+
+  for(unsigned int i=0;i<blob.children.size();i++){
+    drawBlobRecursively(image,blob.children[i],depth+1);
+  }
+}
+
+void drawEllipseRecursively(cv::Mat &image, const Blob &blob, int depth)
+{
+  cv::Scalar color;
+
+  switch(depth%6){
+    case 0:
+      color = CV_RGB(255,0,0);
+      break;
+    case 1:
+      color = CV_RGB(0,255,0);
+      break;
+    case 2:
+      color = CV_RGB(0,0,255);
+      break;
+    case 3:
+      color = CV_RGB(255,255,0);
+      break;
+    case 4:
+      color = CV_RGB(0,255,255);
+      break;
+    case 5:
+      color = CV_RGB(255,0,255);
+      break;
+    default:
+      color = CV_RGB(255,255,255);
+  }
+
+  cv::ellipse(image, cv::RotatedRect(blob.center,cv::Size(blob.minorAxis*2.0,blob.majorAxis*2.0),blob.orientation), color, 2 );
+
+  for(unsigned int i=0;i<blob.children.size();i++){
+    drawEllipseRecursively(image,blob.children[i],depth+1);
+  }
+}
+
+#endif
