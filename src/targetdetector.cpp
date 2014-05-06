@@ -171,7 +171,7 @@ bool TargetDetector::autoThreshold(cv::VideoCapture &capture, Target search, con
  * @param centers is the output vector of target centers
  * @param search is the target to search
  * @param values is an optional list of target values (use values order if provide, inscreasing order if not)
- **/
+ */
 bool TargetDetector::findTargetsGrid(const cv::Mat &image, cv::Size size, std::vector<cv::Point2f> &centers, const Target &search, const std::vector<int> &values) const
 {
   //Find targets
@@ -204,6 +204,9 @@ bool TargetDetector::findTargetsGrid(const cv::Mat &image, cv::Size size, std::v
   return true;
 }
 
+/** Find a grid of targets in the image (static method)
+ * @see findTargetsGrid(const cv::Mat &image, cv::Size size, std::vector<cv::Point2f> &centers, const Target &search, const std::vector<int> &values) const
+ */
 bool TargetDetector::findTargetsGrid(const cv::Mat &image, cv::Size size, std::vector<cv::Point2f> &centers, const Target &search, const int threshold, const std::vector<int> &values)
 {
   TargetDetector t(threshold);
