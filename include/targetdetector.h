@@ -35,18 +35,26 @@ public:
   TargetDetector(int threshold = 125);
   ~TargetDetector();
 
+  //Find grid
   bool findTargetsGrid(const cv::Mat &image, cv::Size size, std::vector<cv::Point2f> &centers, const Target &search, const std::vector<int> &values = std::vector<int>()) const;
-  static void drawTargetGrid(const cv::Mat& image, const cv::Size &size, const std::vector< cv::Point2f >& centers, const bool &found);
+  static bool findTargetsGrid(const cv::Mat &image, cv::Size size, std::vector<cv::Point2f> &centers, const Target &search, const int threshold, const std::vector<int> &values = std::vector<int>());
 
+  //Find tragets
   std::vector<Target> track(const cv::Mat &image, const std::vector<Target> &searches) const;
   std::vector<Target> track(const cv::Mat &image, const Target &search) const;
+  static std::vector<Target> track(const cv::Mat &image, const std::vector<Target> &searches, const int threshold);
+  static std::vector<Target> track(const cv::Mat &image, const Target &search, const int threshold);
 
+  //Draw targets and grid
   static void drawTarget(cv::Mat &image, const Target &target);
   static void drawTargets(cv::Mat &image, const std::vector<Target> &targets);
+  static void drawTargetGrid(const cv::Mat& image, const cv::Size &size, const std::vector< cv::Point2f >& centers, const bool &found);
 
+  //Threshold
   void setThreshold(int threshold);
   int threshold() const;
 
+  //Autothreshold
   bool autoThreshold(const cv::Mat &image, Target search, const int &step = 10);
   bool autoThreshold(const cv::Mat &image, const std::vector<Target> &search, const int &step = 10);
   bool autoThreshold(cv::VideoCapture &capture, Target search, const int &step = 10, const int &nbIterationMax = 100, const bool &display = false);

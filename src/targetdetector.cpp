@@ -204,6 +204,12 @@ bool TargetDetector::findTargetsGrid(const cv::Mat &image, cv::Size size, std::v
   return true;
 }
 
+bool TargetDetector::findTargetsGrid(const cv::Mat &image, cv::Size size, std::vector<cv::Point2f> &centers, const Target &search, const int threshold, const std::vector<int> &values)
+{
+  TargetDetector t(threshold);
+  return t.findTargetsGrid(image,size,centers,search,values);
+}
+
 /** Track a list of targets in an image
  * @param image where to search target
  * @param searches kind of targets to search
@@ -263,6 +269,25 @@ std::vector<Target> TargetDetector::track(const cv::Mat& image, const Target &se
   searches.push_back(search);
   return track(image,searches);
 }
+
+/** Track a target in an image 
+ * @see track(const cv::Mat &image, const std::vector<Target> &searches)
+ */
+std::vector<Target> TargetDetector::track(const cv::Mat& image, const std::vector<Target> &searches, const int threshold)
+{
+  TargetDetector t(threshold);
+  return t.track(image,searches);
+}
+
+/** Track a target in an image 
+ * @see track(const cv::Mat& image, const Target &search)
+ */
+std::vector<Target> TargetDetector::track(const cv::Mat& image, const Target &search, const int threshold)
+{
+  TargetDetector t(threshold);
+  return t.track(image,search);
+}
+
 
 /** Find blobs in binary image
  * @param frameGray is input gray color image
