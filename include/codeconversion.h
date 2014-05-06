@@ -50,8 +50,8 @@ namespace {
       val /= 2;
     }
     std::string str = ss.str();
-    if(str.size()<nbBits){
-      for(unsigned int i=str.size(); i<nbBits; i++)
+    if(str.size()<(unsigned int)nbBits){
+      for(unsigned int i=str.size(); i<(unsigned int)nbBits; i++)
 	ss << "0";
       str = ss.str();
     }

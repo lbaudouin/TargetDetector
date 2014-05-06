@@ -59,5 +59,5 @@ int main(int argc, char* argv[])
   //Draw grid on image
   TargetDetector::drawTargetGrid(image,size,centers,found4);
   
-  return 0;
+  return !(found1 && found2 && found3 && found4);
 }
