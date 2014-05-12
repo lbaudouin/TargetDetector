@@ -19,6 +19,13 @@ TARGET_LINK_LIBRARIES( oneblob ${PROJECT_NAME})
 ADD_TEST(OneBlob oneblob ${CMAKE_SOURCE_DIR}/unitTesting/1B_8h180_8m142_bin.png)
 
 
+ADD_EXECUTABLE(oneblobaffine
+        oneblobtestaffine.cpp
+)
+TARGET_LINK_LIBRARIES( oneblobaffine ${PROJECT_NAME})
+ADD_TEST(OneBlobAffine oneblobaffine ${CMAKE_SOURCE_DIR}/unitTesting/1B_8h180_8m142_bin.png)
+
+
 ADD_EXECUTABLE(threeblobs
         threeblobstest.cpp
 )
@@ -26,11 +33,26 @@ TARGET_LINK_LIBRARIES( threeblobs ${PROJECT_NAME})
 ADD_TEST(ThreeBlobs threeblobs ${CMAKE_SOURCE_DIR}/unitTesting/3B_8h180_8m142_bin.png)
 
 
+ADD_EXECUTABLE(threeblobsaffine
+        threeblobstestaffine.cpp
+)
+TARGET_LINK_LIBRARIES( threeblobsaffine ${PROJECT_NAME})
+ADD_TEST(ThreeBlobsAffine threeblobsaffine ${CMAKE_SOURCE_DIR}/unitTesting/3B_8h180_8m142_bin.png)
+
+
 ADD_EXECUTABLE(tworings
         tworingstest.cpp
 )
 TARGET_LINK_LIBRARIES( tworings ${PROJECT_NAME})
 ADD_TEST(TwoRings tworings ${CMAKE_SOURCE_DIR}/unitTesting/2R_8h180_8m142_bin.png)
+
+
+ADD_EXECUTABLE(tworingsaffine
+        tworingstestaffine.cpp
+)
+TARGET_LINK_LIBRARIES( tworingsaffine ${PROJECT_NAME})
+ADD_TEST(TwoRingsAffine tworingsaffine ${CMAKE_SOURCE_DIR}/unitTesting/2R_8h180_8m142_bin.png)
+
 
 ADD_EXECUTABLE(testtypes
         testtypes.cpp

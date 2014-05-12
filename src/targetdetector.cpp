@@ -226,6 +226,9 @@ std::vector<Target> TargetDetector::track(const cv::Mat &image, const std::vecto
   }else{
     cv::cvtColor(image,imageGray,CV_BGR2GRAY);
   }
+  
+  //Blur the image
+  cv::blur(imageGray,imageGray,cv::Size(3,3));
 
   //Extract blobs
   std::vector<Blob> blobs = findBlobs(imageGray);
