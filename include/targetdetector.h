@@ -62,7 +62,7 @@ public:
 
 protected:
   //Find blobs
-  std::vector<Blob> findBlobs(const cv::Mat &frameGray, const int &thresholdType = CV_THRESH_BINARY) const;
+  std::vector<Blob> findBlobs(const cv::Mat &frameGray) const;
   Blob createBlob(int index, const std::vector<std::vector<cv::Point> > &contours, const std::vector<cv::Vec4i> &hierarchy, bool &ok) const;
   Blob createBlob(const std::vector<cv::Point> &external, bool &ok) const;
 

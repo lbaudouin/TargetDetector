@@ -297,14 +297,12 @@ std::vector<Target> TargetDetector::track(const cv::Mat& image, const Target &se
 
 /** Find blobs in binary image
  * @param frameGray is input gray color image
- * @param thresholdType is the type of threshold used : CV_THRESH_BINARY (black blobs) or CV_THRESH_BINARY_INV (white blobs)
  **/
-std::vector<Blob> TargetDetector::findBlobs(const cv::Mat &frameGray, const int &thresholdType) const
+std::vector<Blob> TargetDetector::findBlobs(const cv::Mat &frameGray) const
 {
   //Segment image
   cv::Mat segmented;
   cv::threshold(frameGray, segmented, m_binaryThreshold, 255, CV_THRESH_BINARY_INV);
-  //cv::Mat segmented = thresholdType==CV_THRESH_BINARY ? (frameGray > m_threshold) : (frameGray < m_threshold);
 
 #ifdef DEBUG_MODE
   cv::imshow("Binary",segmented);

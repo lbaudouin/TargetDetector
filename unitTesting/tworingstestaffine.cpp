@@ -46,6 +46,7 @@ cv::Point2f applyTransform(const cv::Point2f &in, const cv::Mat &transform)
 
 int main(int argc, char* argv[])
 {
+  if(argc<2) return EXIT_FAILURE;
   
   cv::Mat I = cv::imread(argv[1]), T;
   cv::Point2f center(I.cols/2,I.rows/2);

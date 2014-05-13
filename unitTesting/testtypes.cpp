@@ -13,9 +13,12 @@
 // this library. If not, see <http://www.gnu.org/licenses/>.
 
 #include "targetdetector.h"
+#include "stdlib.h"
 
 int main(int argc, char* argv[])
 {
+  if(argc<4) return EXIT_FAILURE;
+  
   TargetDetector detector;
   
   cv::Mat I1 = cv::imread(argv[1]);
