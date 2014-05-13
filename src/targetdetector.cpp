@@ -1201,7 +1201,7 @@ void TargetDetector::drawLineBetweenPoints(cv::Mat &image, const cv::Point2f &p1
  * @param centers are input centers
  * @param found set to true if grid was found
  */
-void TargetDetector::drawTargetGrid(const cv::Mat &image, const cv::Size &size, const std::vector< cv::Point2f > &centers, const bool &found)
+void TargetDetector::drawTargetGrid(cv::Mat &image, const cv::Size &size, const std::vector< cv::Point2f > &centers, const bool &found)
 {
   cv::drawChessboardCorners(image,size,centers,found);
 }

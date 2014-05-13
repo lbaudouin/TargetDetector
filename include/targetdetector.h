@@ -48,7 +48,7 @@ public:
   //Draw targets and grid
   static void drawTarget(cv::Mat &image, const Target &target);
   static void drawTargets(cv::Mat &image, const std::vector<Target> &targets);
-  static void drawTargetGrid(const cv::Mat& image, const cv::Size &size, const std::vector< cv::Point2f >& centers, const bool &found);
+  static void drawTargetGrid(cv::Mat& image, const cv::Size &size, const std::vector< cv::Point2f >& centers, const bool &found);
 
   //Threshold
   void setThreshold(int threshold);
