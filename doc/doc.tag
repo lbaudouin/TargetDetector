@@ -19,4 +19,22 @@ It can deal with three kinds of targets:
 </tr>
 </table>
 
+Each target include a header, a message and an optional parity bit as follow:
+
+<table>
+<tr>
+<td>\image html bits.png</td>
+<td>
+Legend:
+<ul> 
+<li>Green: header </li> 
+<li>Red: message </li> 
+<li>Blue: parity (optinal) </li> 
+</ul> 
+</td>
+</tr>
+</table>
+
+The target detector is looking for a particular header value given by the user and returns all targets found and their message.
+
 */
