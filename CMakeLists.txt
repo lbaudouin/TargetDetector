@@ -102,6 +102,15 @@ INSTALL(TARGETS ${PROJECT_NAME}
 	DESTINATION lib/
         PERMISSIONS OWNER_READ GROUP_READ WORLD_READ OWNER_WRITE)
 
+#Uninstall library
+CONFIGURE_FILE(
+    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/cmake_uninstall.cmake.in"
+    "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake"
+    IMMEDIATE @ONLY)
+
+add_custom_target(uninstall
+    COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake)
+    
 #Configure and install LibraryConfig.cmake.in
 CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/LibraryConfig.cmake.in
   "${PROJECT_BINARY_DIR}/${PROJECT_NAME}Config.cmake" )

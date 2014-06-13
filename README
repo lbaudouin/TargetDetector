@@ -30,7 +30,14 @@ $ make -j 3
 Install:
 $ make
 $ make install
+or
+$ sudo make install
 (The documentation is build before installing if needed)
+
+Uninstall:
+$ make uninstall
+or
+$ sudo make uninstall
 
 Create documentation:
 $ make doc
