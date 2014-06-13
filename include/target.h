@@ -50,7 +50,7 @@ public:
    */
   Target(Type target_type, int header_bits, int message_bits, bool use_parity_bit, int header_value, bool use_gray_code = false) : 
 	m_type(target_type), m_nbPointPerBit(8), m_useGrayCode(use_gray_code), m_useParityBit(use_parity_bit), m_inverseParityBit(false),
-	m_headerValue(header_value), m_headerBits(header_bits), m_messageBits(message_bits), m_firstHeaderIndex(0), m_orientation(-1), m_readCode(true)
+	m_headerBits(header_bits), m_headerValue(header_value), m_messageBits(message_bits), m_messageValue(0), m_firstHeaderIndex(0), m_orientation(-1), m_readCode(true)
   {
     m_nbBits = m_headerBits + m_messageBits + (use_parity_bit?1:0);
         
@@ -224,7 +224,17 @@ public:
   
   /** @warning Not read-only list of contours **/
   std::vector<cv::Point> contours;  
-    
+  
+  friend std::ostream & operator<<(std::ostream &os, const Target& p) {
+    switch(p.type()){
+      case Target::OneBlob: os << "Target::OneBlob"; break;
+      case Target::ThreeBlobs: os << "Target::ThreeBlobs"; break;
+      case Target::TwoRings: os << "Target::TwoRings"; break;
+    }
+    os << ", header: " << p.headerBits() << "b = " << p.header() << ", message: " << p.messageBits() << "b = " << p.message() << ", parity = " << (p.useParityBit()?"true":"false");
+    return os;
+  }
+      
 protected:
   /** Initialize the type of target **/
   void initType()
@@ -258,10 +268,10 @@ private:
   bool m_useParityBit; /*!< Use parity bit */
   bool m_inverseParityBit; /*!< Inverse parity bit */
   
-  int m_headerValue; /*!< Header value */
   int m_headerBits; /*!< Header number of bits */
-  int m_messageValue; /*!< Message value */
+  int m_headerValue; /*!< Header value */
   int m_messageBits; /*!< Message number of bits */
+  int m_messageValue; /*!< Message value */
   
   int m_firstHeaderIndex; /*!< First header index */
   
