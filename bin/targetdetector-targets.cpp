@@ -29,7 +29,7 @@ std::string toStr(double d);
 int main(int argc, char* argv[])
 {
   cv::VideoCapture capture;
-  bool isVideo = true;
+  bool isVideo = false;
 
   if(argc>1){
     //Try to read camera index
@@ -42,8 +42,8 @@ int main(int argc, char* argv[])
     }else{
       //Open file
       capture.open(argv[1]);
-      if(capture.get(CV_CAP_PROP_FRAME_COUNT)==1)
-	isVideo = false;
+      if(capture.get(CV_CAP_PROP_FRAME_COUNT)>1)
+	isVideo = true;
     }
   }else{
     //Default

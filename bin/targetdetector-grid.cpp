@@ -30,7 +30,7 @@ void createDefaultGridConfig(std::string filepath);
 int main(int argc, char* argv[])
 {  
   cv::VideoCapture capture;
-  bool isVideo = true;
+  bool isVideo = false;
 
   std::string targetType = "3B";
   int headerBits = 8;
@@ -71,8 +71,8 @@ int main(int argc, char* argv[])
     }else{
       //Open file
       capture.open(argv[i]);
-      if(capture.get(CV_CAP_PROP_FRAME_COUNT)==1)
-	isVideo = false;
+      if(capture.get(CV_CAP_PROP_FRAME_COUNT)>1)
+	isVideo = true;
     }
   }
   
@@ -85,7 +85,6 @@ int main(int argc, char* argv[])
     std::cerr << "Failed to open video capture" << std::endl;
     return 1;
   }
-
 
   //Create Detector
   TargetDetector targetDetector;
