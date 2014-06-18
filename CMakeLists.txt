@@ -56,9 +56,11 @@ IF(DEBUG_MODE)
   add_definitions( "-DDEBUG_MODE" )
 ENDIF(DEBUG_MODE)
 
-IF(${OpenCV_VERSION} LESS "2.4.7")
+IF(${OpenCV_VERSION} VERSION_LESS "2.4.7")
   add_definitions( "-DDISABLE_XML" )
-ENDIF(${OpenCV_VERSION} LESS "2.4.7")
+    MESSAGE( STATUS "OpenCV Version : ${OpenCV_VERSION}" )
+ENDIF(${OpenCV_VERSION} VERSION_LESS "2.4.7")
+
 
 #Set sources files
 file(GLOB ${PROJECT_NAME}_SRCS src/*.cpp)
