@@ -25,7 +25,10 @@
 void help(std::string exec);
 bool isNumber(const std::string &str, int &nb);
 std::string toStr(double d);
+
+#ifndef DISABLE_XML 
 void createDefaultGridConfig(std::string filepath);
+#endif
 
 int main(int argc, char* argv[])
 {  
@@ -43,6 +46,7 @@ int main(int argc, char* argv[])
   
   for(int i=1;i<argc;i++){
     if(!strcmp(argv[i],"-t")) {thresholdString = atoi(argv[++i]); continue;}
+#ifndef DISABLE_XML 
     if(!strcmp(argv[i],"-g")) {
       cv::FileStorage fs(argv[++i], cv::FileStorage::READ);
       fs["targetType"] >> targetType;
@@ -58,7 +62,7 @@ int main(int argc, char* argv[])
       createDefaultGridConfig(argv[++i]);
       return 0;
     }
-    
+#endif
     if(!strcmp(argv[i],"-h") || !strcmp(argv[i],"--help") || !strcmp(argv[i],"-?")) {help(argv[0]); return 1;}
     
     //Try to read camera index
@@ -191,8 +195,10 @@ void help(std::string exec)
   std::cout << "Source:\n\tCamera index (default: 0)\n\tVideo file\n\tImage file" << std::endl;
   std::cout << "Options:"<<std::endl;
   std::cout << "\t-t <value>\t\t\tBinary threshold in [0:255] or \"Auto\" (default: 125)" << std::endl;
+#ifndef DISABLE_XML 
   std::cout << "\t-g <filename.xml>\t\tRead grid config" << std::endl;
   std::cout << "\t--generate <filename.xml>\tGenerate default grid config" << std::endl;
+#endif
 }
 
 std::string toStr(double d)
@@ -213,6 +219,7 @@ bool isNumber(const std::string &number, int &nb)
   return true;
 }
 
+#ifndef DISABLE_XML 
 void createDefaultGridConfig(std::string filepath)
 {
   cv::FileStorage file(filepath, cv::FileStorage::WRITE | cv::FileStorage::FORMAT_XML);
@@ -223,3 +230,4 @@ void createDefaultGridConfig(std::string filepath)
   file << "messageBits" << 8;
   file << "useParityBit" << false;
 }
+#endif
