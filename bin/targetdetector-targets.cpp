@@ -26,35 +26,73 @@ void help(std::string exec);
 bool isNumber(const std::string &str, int &nb);
 std::string toStr(double d);
 
+#ifndef DISABLE_XML 
+void createDefaultConfig(std::string filepath);
+#endif
+
 int main(int argc, char* argv[])
 {
-  cv::VideoCapture capture;
+cv::VideoCapture capture;
   bool isVideo = false;
 
-  if(argc>1){
+  std::string targetType = "3B";
+  int headerBits = 8;
+  int headerValue = 180;
+  int messageBits = 8;
+  bool useParityBit = false;
+  std::string thresholdString; 
+  cv::Size targetSize(4,5);
+  std::vector<int> values;
+  
+  for(int i=1;i<argc;i++){
+    if(!strcmp(argv[i],"-t") || !strcmp(argv[i],"--threshold")) {thresholdString = argv[++i]; continue;}
+#ifndef DISABLE_XML 
+    if(!strcmp(argv[i],"-c") || !strcmp(argv[i],"--config")) {
+      cv::FileStorage fs(argv[++i], cv::FileStorage::READ);
+      fs["targetType"] >> targetType;
+      fs["headerBits"] >> headerBits;
+      fs["headerValue"] >> headerValue;
+      fs["messageBits"] >> messageBits;
+      fs["useParityBit"] >> useParityBit;
+      continue;
+    }
+    if(!strcmp(argv[i],"-g") || !strcmp(argv[i],"--generate")) {
+      createDefaultConfig(argv[++i]);
+      return 0;
+    }
+#endif
+    if(!strcmp(argv[i],"-h") || !strcmp(argv[i],"--help") || !strcmp(argv[i],"-?")) {help(argv[0]); return 1;}
+    
     //Try to read camera index
     int cameraIndex = 0;
-    std::istringstream iss(argv[1]);
-    iss >> std::ws >> cameraIndex >> std::ws;
-    if(iss.eof()){
+    std::istringstream iss(argv[i]);
+    iss >> cameraIndex;
+    
+    if(!iss.fail()){
       //Open camera
+      int cameraIndex = atoi(argv[i]);
       capture.open(cameraIndex);
+      isVideo = true;
     }else{
       //Open file
-      capture.open(argv[1]);
+      capture.open(argv[i]);
       if(capture.get(CV_CAP_PROP_FRAME_COUNT)>1)
 	isVideo = true;
     }
-  }else{
-    //Default
-    capture.open(CV_CAP_ANY);
   }
-
+  
+  
+  if(!capture.isOpened()){
+      capture.open(CV_CAP_ANY);
+	isVideo = true;
+  }
+  
   if(!capture.isOpened()){
     std::cerr << "Failed to open video capture" << std::endl;
-    help(argv[0]);
     return 1;
   }
+  
+  std::cout << "Read from video: " << (isVideo?"true":"false") << std::endl;
 
 
   //Create Detector
@@ -63,27 +101,32 @@ int main(int argc, char* argv[])
 
   if(!isVideo)
     capture >> image;
+  
+  Target::Type type = Target::ThreeBlobs;
+  if(targetType=="1B"){
+    type = Target::OneBlob;
+  }else if(targetType=="2R"){
+    type = Target::TwoRings;
+  }
 
-  //Set targets
-  std::vector<Target> searches;
-  searches.push_back( Target(Target::OneBlob,8,8,false,180) );
-  searches.push_back( Target(Target::ThreeBlobs,8,8,false,180) );
-  searches.push_back( Target(Target::TwoRings,8,8,false,180) );
+  //Set target
+  Target target = Target(type,headerBits,messageBits,useParityBit,headerValue);
+  std::cout << "Target: " << target << std::endl;
 
   //Read and set threshold
   int threshold = 125;
-  if(argc>2){
-    if(std::string(argv[2])=="auto" || std::string(argv[2])=="Auto"){
+  if(thresholdString!=""){
+    if(thresholdString=="auto" || thresholdString=="Auto"){
       if(isVideo)
-	targetDetector.autoThreshold(capture,searches[0],10,250,true);
+	targetDetector.autoThreshold(capture,target,10,250,true);
       else{
-	targetDetector.autoThreshold(image,searches[0],10);
+	targetDetector.autoThreshold(image,target,10);
       }
     }else{
-      if(isNumber(argv[2],threshold)){
+      if(isNumber(thresholdString,threshold)){
 	targetDetector.setThreshold(threshold);	
       }else{
-	std::cerr << "'" << argv[2] << "' is not a number in [0-255] or 'auto'" << std::endl;
+	std::cerr << "'" << thresholdString << "' is not a number in [0-255] or 'auto'" << std::endl;
 	help(argv[0]);
 	return 1;
       }
@@ -111,7 +154,7 @@ int main(int argc, char* argv[])
     execTimer.restart();
 
     //Detect targets
-    std::vector<Target> targets = targetDetector.track(image,searches);
+    std::vector<Target> targets = targetDetector.track(image,target);
 
     double execTime = execTimer.elapsed();
 
@@ -155,12 +198,16 @@ int main(int argc, char* argv[])
   return 0;
 }
 
-
 void help(std::string exec)
 {
-  std::cout << "Usage:\n\t" << exec << " [source] [threshold]" << std::endl;
-  std::cout << "Source:\n\tCamera index (default is 0)\n\tVideo file\n\tImage file" << std::endl;
-  std::cout << "Threshold:\n\tBinary threshold in [0:255] (default is 125)\n\tAuto" << std::endl;
+  std::cout << "Usage:\n\t" << exec << " [option] [source] " << std::endl;
+  std::cout << "Source:\n\tCamera index (default: 0)\n\tVideo file\n\tImage file" << std::endl;
+  std::cout << "Options:"<<std::endl;
+  std::cout << "\t-t <value>\t\t\tBinary threshold in [0:255] or \"Auto\" (default: 125)" << std::endl;
+#ifndef DISABLE_XML 
+  std::cout << "\t-c <filename.xml>\t\tRead target config" << std::endl;
+  std::cout << "\t-g <filename.xml>\tGenerate default target config" << std::endl;
+#endif
 }
 
 std::string toStr(double d)
@@ -180,3 +227,15 @@ bool isNumber(const std::string &number, int &nb)
     return false;
   return true;
 }
+
+#ifndef DISABLE_XML 
+void createDefaultConfig(std::string filepath)
+{
+  cv::FileStorage file(filepath, cv::FileStorage::WRITE | cv::FileStorage::FORMAT_XML);
+  file << "targetType" << "3B";
+  file << "headerBits" << 8;
+  file << "headerValue" << 180;
+  file << "messageBits" << 8;
+  file << "useParityBit" << false;
+}
+#endif

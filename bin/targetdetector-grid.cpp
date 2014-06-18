@@ -14,6 +14,9 @@
 
 #include <iostream>
 #include <targetdetector.h>
+#include <ctype.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 #include "timer.h"
 
@@ -45,9 +48,9 @@ int main(int argc, char* argv[])
   std::vector<int> values;
   
   for(int i=1;i<argc;i++){
-    if(!strcmp(argv[i],"-t")) {thresholdString = atoi(argv[++i]); continue;}
+    if(!strcmp(argv[i],"-t") || !strcmp(argv[i],"--threshold")) {thresholdString = argv[++i]; continue;}
 #ifndef DISABLE_XML 
-    if(!strcmp(argv[i],"-g")) {
+    if(!strcmp(argv[i],"-c") || !strcmp(argv[i],"--config")) {
       cv::FileStorage fs(argv[++i], cv::FileStorage::READ);
       fs["targetType"] >> targetType;
       fs["headerBits"] >> headerBits;
@@ -58,7 +61,7 @@ int main(int argc, char* argv[])
       fs["values"] >> values;
       continue;
     }
-    if(!strcmp(argv[i],"--generate")) {
+    if(!strcmp(argv[i],"-g") || !strcmp(argv[i],"--generate")) {
       createDefaultGridConfig(argv[++i]);
       return 0;
     }
@@ -68,10 +71,13 @@ int main(int argc, char* argv[])
     //Try to read camera index
     int cameraIndex = 0;
     std::istringstream iss(argv[i]);
-    iss >> std::ws >> cameraIndex >> std::ws;
-    if(iss.eof()){
+    iss >> cameraIndex;
+    
+    if(!iss.fail()){
       //Open camera
+      int cameraIndex = atoi(argv[i]);
       capture.open(cameraIndex);
+      isVideo = true;
     }else{
       //Open file
       capture.open(argv[i]);
@@ -83,13 +89,17 @@ int main(int argc, char* argv[])
   
   if(!capture.isOpened()){
       capture.open(CV_CAP_ANY);
+	isVideo = true;
   }
   
   if(!capture.isOpened()){
     std::cerr << "Failed to open video capture" << std::endl;
     return 1;
   }
+  
+  std::cout << "Read from video: " << (isVideo?"true":"false") << std::endl;
 
+  
   //Create Detector
   TargetDetector targetDetector;
   cv::Mat image;
@@ -196,8 +206,8 @@ void help(std::string exec)
   std::cout << "Options:"<<std::endl;
   std::cout << "\t-t <value>\t\t\tBinary threshold in [0:255] or \"Auto\" (default: 125)" << std::endl;
 #ifndef DISABLE_XML 
-  std::cout << "\t-g <filename.xml>\t\tRead grid config" << std::endl;
-  std::cout << "\t--generate <filename.xml>\tGenerate default grid config" << std::endl;
+  std::cout << "\t-c <filename.xml>\t\tRead grid config" << std::endl;
+  std::cout << "\t-g <filename.xml>\tGenerate default grid config" << std::endl;
 #endif
 }
 
@@ -225,6 +235,7 @@ void createDefaultGridConfig(std::string filepath)
   cv::FileStorage file(filepath, cv::FileStorage::WRITE | cv::FileStorage::FORMAT_XML);
   file << "targetType" << "3B";
   file << "gridSize" << cv::Size(4,5);
+  file << "values" << std::vector<int>();
   file << "headerBits" << 8;
   file << "headerValue" << 180;
   file << "messageBits" << 8;
